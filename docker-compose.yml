@@ -1,0 +1,16 @@
+services:
+
+  jenkins:
+    image: jenkins/jenkins:latest-jdk21
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - ./selenium-plugin/target:/usr/share/jenkins/ref/plugins/
+
+  ssh-agent:
+    image: jenkins/ssh-agent
+
+volumes:
+  jenkins_home:
