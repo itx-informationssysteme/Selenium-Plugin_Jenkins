@@ -4,10 +4,11 @@
 
 TODO Describe what your plugin does here
 
-## Getting started
+## Plugin Development
 
-TODO Tell users how to configure your plugin here, include screenshots, pipeline examples and 
-configuration-as-code examples.
+`mvn clean verify`
+
+`mvn -Dhost=0.0.0.0 hpi:run`
 
 ## Issues
 
