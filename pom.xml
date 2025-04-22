@@ -10,7 +10,7 @@
   </parent>
 
   <groupId>io.jenkins.plugins</groupId>
-  <artifactId>selenium-plugin</artifactId>
+  <artifactId>Selenium-Plugin_Jenkins</artifactId>
   <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 

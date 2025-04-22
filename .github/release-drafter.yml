@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: Selenium-Plugin_Jenkins-$NEXT_MINOR_VERSION
