@@ -1,0 +1,24 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="Selenium verwalten">
+        <l:main-panel>
+            <f:form method="post" name="config" action="${it.doSave(version.value)}">
+                <f:entry title="Selenium Version">
+                    <select name="seleniumVersion" style="width: 200px;">
+                        <option value="">-- Bitte wählen --</option>
+                        <j:forEach var="version" items="${it.doFillSeleniumVersionItems()}">
+                            <option value="${version.value}"
+                                    selected="${it.seleniumVersion == version.value ? 'true' : ''}">
+                                ${version.name}
+                            </option>
+                        </j:forEach>
+                    </select>
+                </f:entry>
+
+                <f:bottomButtonBar>
+                    <f:submit value="Speichern"/>
+                </f:bottomButtonBar>
+            </f:form>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
