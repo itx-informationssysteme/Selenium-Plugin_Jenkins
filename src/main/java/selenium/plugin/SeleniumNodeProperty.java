@@ -33,7 +33,6 @@ public class SeleniumNodeProperty extends NodeProperty<Node> {
         }
 
         public FormValidation doStartNode(@QueryParameter boolean enabled) {
-            // Your logic to start the Selenium server
             return FormValidation.ok("Selenium Node wurde gestartet.");
         }
     }

@@ -2,14 +2,13 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
     <l:layout title="Selenium verwalten">
         <l:main-panel>
-            <f:form method="post" name="config" action="${it.doSave(version.value)}">
+            <f:form method="post" name="config" action="save">
                 <f:entry title="Selenium Version">
                     <select name="seleniumVersion" style="width: 200px;">
                         <option value="">-- Bitte wählen --</option>
-                        <j:forEach var="version" items="${it.doFillSeleniumVersionItems()}">
-                            <option value="${version.value}"
-                                    selected="${it.seleniumVersion == version.value ? 'true' : ''}">
-                                ${version.name}
+                        <j:forEach var="v" items="${it.doFillSeleniumVersionItems()}">
+                            <option value="${v.value}" selected="${it.seleniumVersion == v.value ? 'true' : ''}">
+                                ${v.name}
                             </option>
                         </j:forEach>
                     </select>
@@ -18,6 +17,12 @@
                 <f:bottomButtonBar>
                     <f:submit value="Speichern"/>
                 </f:bottomButtonBar>
+            </f:form>
+
+            <f:form method="post" name="startHubForm" action="startHub">
+                <f:entry title="Selenium Hub starten">
+                    <f:submit value="Starten"/>
+                </f:entry>
             </f:form>
         </l:main-panel>
     </l:layout>
