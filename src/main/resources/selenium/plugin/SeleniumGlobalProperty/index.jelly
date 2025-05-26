@@ -26,7 +26,22 @@
 
             <f:form method="post" name="startHubForm" action="startHub">
                 <f:entry title="Selenium Hub starten">
-                    <f:submit value="Starten"/>
+                    <j:if test="${!it.hubRunning}">
+                        <f:submit value="Starten"/>
+                    </j:if>
+                    <j:if test="${it.hubRunning}">
+                        Hub ist bereits gestartet.
+                    </j:if>
+                </f:entry>
+                <f:entry title="Hub Status">
+                    <j:choose>
+                        <j:when test="${it.hubRunning}">
+                            <div style="color:green;">${it.hubStatusText}</div>
+                        </j:when>
+                        <j:otherwise>
+                            <div style="color:red;">${it.hubStatusText}</div>
+                        </j:otherwise>
+                    </j:choose>
                 </f:entry>
             </f:form>
         </l:main-panel>
