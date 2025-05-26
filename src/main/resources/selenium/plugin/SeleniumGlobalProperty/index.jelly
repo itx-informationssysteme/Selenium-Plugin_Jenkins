@@ -7,9 +7,14 @@
                     <select name="seleniumVersion" style="width: 200px;">
                         <option value="">-- Bitte wählen --</option>
                         <j:forEach var="v" items="${it.doFillSeleniumVersionItems()}">
-                            <option value="${v.value}" selected="${it.seleniumVersion == v.value ? 'true' : ''}">
-                                ${v.name}
-                            </option>
+                            <j:choose>
+                                <j:when test="${it.seleniumVersion != null and it.seleniumVersion.equals(v.value)}">
+                                    <option value="${v.value}" selected="selected">${v.name}</option>
+                                </j:when>
+                                <j:otherwise>
+                                    <option value="${v.value}">${v.name}</option>
+                                </j:otherwise>
+                            </j:choose>
                         </j:forEach>
                     </select>
                 </f:entry>

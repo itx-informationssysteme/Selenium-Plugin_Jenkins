@@ -15,6 +15,7 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 @Extension
@@ -22,12 +23,29 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     private String seleniumVersion;
 
+    // Getter für die Version
     public String getSeleniumVersion() {
         return seleniumVersion;
     }
 
+    @DataBoundSetter
     public void setSeleniumVersion(String seleniumVersion) {
         this.seleniumVersion = seleniumVersion;
+        save();
+    }
+
+    // Methode zum Speichern der Konfiguration
+    private void save() {
+        try {
+            Jenkins.get().save();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save configuration", e);
+        }
+    }
+
+    public FormValidation doSave(@QueryParameter String seleniumVersion) {
+        setSeleniumVersion(seleniumVersion);
+        return FormValidation.ok("Selenium Version " + seleniumVersion + " wurde gespeichert");
     }
 
     @Override
@@ -63,16 +81,15 @@ public class SeleniumGlobalProperty extends ManagementLink {
         return items;
     }
 
-    public FormValidation doStartHub(@QueryParameter String seleniumVersion) {
-        this.seleniumVersion = seleniumVersion;
-        if (seleniumVersion == null || seleniumVersion.isEmpty()) {
+    public FormValidation doStartHub() {
+        if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
             return FormValidation.error("Bitte wählen Sie eine Selenium-Version aus.");
         }
 
         try {
             String downloadUrl = String.format(
                     "https://github.com/SeleniumHQ/selenium/releases/download/selenium-%s/selenium-server-%s.jar",
-                    seleniumVersion, seleniumVersion);
+                    this.seleniumVersion, this.seleniumVersion);
 
             File destFile = new File(Jenkins.get().getRootDir(), "selenium-hub.jar");
 
@@ -90,12 +107,6 @@ public class SeleniumGlobalProperty extends ManagementLink {
         } catch (IOException e) {
             return FormValidation.error("Fehler beim Starten des Selenium Hubs: " + e.getMessage());
         }
-    }
-
-    public FormValidation doSave(@QueryParameter String seleniumVersion) {
-        this.seleniumVersion = seleniumVersion;
-        //        Jenkins.get().save();
-        return FormValidation.ok("Gespeichert");
     }
 
     private List<String[]> fetchSeleniumVersions() throws IOException {
