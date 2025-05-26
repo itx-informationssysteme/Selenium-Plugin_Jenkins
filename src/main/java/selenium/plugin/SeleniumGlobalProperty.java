@@ -48,9 +48,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
     public ListBoxModel doFillSeleniumVersionItems() {
         ListBoxModel items = new ListBoxModel();
         try {
-            List<String> versions = fetchSeleniumVersions();
-            for (String version : versions) {
-                items.add(version, version);
+            List<String[]> versions = fetchSeleniumVersions();
+            for (String[] version : versions) {
+                items.add(version[0], version[1]);
             }
         } catch (IOException e) {
             items.add("Fehler beim Laden der Versionen", "");
@@ -62,7 +62,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
         this.seleniumVersion = seleniumVersion;
     }
 
-    private List<String> fetchSeleniumVersions() throws IOException {
+    private List<String[]> fetchSeleniumVersions() throws IOException {
         String apiUrl = "https://api.github.com/repos/SeleniumHQ/selenium/tags";
         String json = IOUtils.toString(new URL(apiUrl), "UTF-8");
         JSONArray tags = JSONArray.fromObject(json);
@@ -71,6 +71,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
                 .map(obj -> ((JSONObject) obj).getString("name"))
                 .limit(50)
                 .sorted()
+                .map(version -> new String[] {version, version.replace("selenium-", "")})
                 .collect(Collectors.toList());
     }
 }
