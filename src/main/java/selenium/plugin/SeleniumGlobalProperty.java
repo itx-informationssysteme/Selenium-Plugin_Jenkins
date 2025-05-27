@@ -19,6 +19,8 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 
 @Extension
@@ -61,9 +63,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         }
     }
 
-    public FormValidation doSave(@QueryParameter String seleniumVersion) {
+    public HttpResponse doSave(@QueryParameter String seleniumVersion) {
         setSeleniumVersion(seleniumVersion);
-        return FormValidation.ok("Selenium Version " + seleniumVersion + " wurde gespeichert");
+        return new HttpRedirect(".");
     }
 
     @Initializer(after = InitMilestone.JOB_LOADED)
@@ -105,9 +107,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         return items;
     }
 
-    public FormValidation doStartHub() {
+    public HttpResponse doStartHub() {
         if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
-            return FormValidation.error("Bitte wählen Sie eine Selenium-Version aus.");
+            return FormValidation.error("Bitte wählen Sie eine Selenium-Version aus und speichern Sie die Konfiguration.");
         }
 
         try {
@@ -129,15 +131,27 @@ public class SeleniumGlobalProperty extends ManagementLink {
             this.hubActive = true;
             save();
 
-            return FormValidation.ok("Selenium Hub wurde erfolgreich gestartet.");
+            int retries = 0;
+            while (!isHubReachable() && retries < 10) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+                retries++;
+            }
+
+            return new HttpRedirect(".");
+
         } catch (IOException e) {
             return FormValidation.error("Fehler beim Starten des Selenium Hubs: " + e.getMessage());
         }
     }
 
-    public FormValidation doStopHub() {
+    public HttpResponse doStopHub() {
         if (hubProcess == null) {
-            return FormValidation.ok("Kein Prozess vorhanden.");
+            return FormValidation.error("Kein Prozess vorhanden.");
         }
         if (!hubProcess.isAlive()) {
             return FormValidation.ok("Selenium Hub ist bereits gestoppt.");
@@ -148,7 +162,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
             hubProcess = null;
             this.hubActive = false;
             save();
-            return FormValidation.ok("Selenium Hub wurde gestoppt.");
+            return new HttpRedirect(".");
         } catch (InterruptedException e) {
             return FormValidation.error("Fehler beim Stoppen des Selenium Hubs: " + e.getMessage());
         }
@@ -228,7 +242,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
     }
 
     public String getHubStatusText() {
-        if (!isHubReachable()) {
+        if (seleniumVersion == null) {
+            return "Bitte setzen Sie die Selenium Version und speichern Sie die Konfiguration.";
+        } else if (!isHubReachable()) {
             return "Hub nicht im Betrieb";
         } else if (!isHubReady()) {
             return "Hub gestartet, aber keine Nodes registriert (Url: " + getHubUrl() + ")";
