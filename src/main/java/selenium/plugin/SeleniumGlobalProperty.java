@@ -1,6 +1,8 @@
 package selenium.plugin;
 
 import hudson.Extension;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.ManagementLink;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -24,8 +26,10 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     private transient volatile List<String[]> cachedVersions;
     private transient volatile long lastFetchTime;
+    private transient Process hubProcess;
 
     private String seleniumVersion;
+    private boolean hubActive;
 
     // Getter für die Version
     public String getSeleniumVersion() {
@@ -35,6 +39,16 @@ public class SeleniumGlobalProperty extends ManagementLink {
     @DataBoundSetter
     public void setSeleniumVersion(String seleniumVersion) {
         this.seleniumVersion = seleniumVersion;
+        save();
+    }
+
+    public boolean getHubActive() {
+        return hubActive;
+    }
+
+    @DataBoundSetter
+    public void setHubActive(boolean hubShouldBeRunning) {
+        this.hubActive = hubShouldBeRunning;
         save();
     }
 
@@ -50,6 +64,16 @@ public class SeleniumGlobalProperty extends ManagementLink {
     public FormValidation doSave(@QueryParameter String seleniumVersion) {
         setSeleniumVersion(seleniumVersion);
         return FormValidation.ok("Selenium Version " + seleniumVersion + " wurde gespeichert");
+    }
+
+    @Initializer(after = InitMilestone.JOB_LOADED)
+    public static void initAfterStartup() {
+        SeleniumGlobalProperty instance = ManagementLink.all().get(SeleniumGlobalProperty.class);
+        if (instance != null && instance.seleniumVersion != null && instance.hubActive) {
+            if (!instance.isHubReachable()) {
+                instance.doStartHub();
+            }
+        }
     }
 
     @Override
@@ -101,11 +125,32 @@ public class SeleniumGlobalProperty extends ManagementLink {
             ProcessBuilder pb = new ProcessBuilder("java", "-jar", destFile.getAbsolutePath(), "hub");
             pb.redirectErrorStream(true);
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            pb.start();
+            this.hubProcess = pb.start();
+            this.hubActive = true;
+            save();
 
             return FormValidation.ok("Selenium Hub wurde erfolgreich gestartet.");
         } catch (IOException e) {
             return FormValidation.error("Fehler beim Starten des Selenium Hubs: " + e.getMessage());
+        }
+    }
+
+    public FormValidation doStopHub() {
+        if (hubProcess == null) {
+            return FormValidation.ok("Kein Prozess vorhanden.");
+        }
+        if (!hubProcess.isAlive()) {
+            return FormValidation.ok("Selenium Hub ist bereits gestoppt.");
+        }
+        try {
+            hubProcess.destroy();
+            hubProcess.waitFor();
+            hubProcess = null;
+            this.hubActive = false;
+            save();
+            return FormValidation.ok("Selenium Hub wurde gestoppt.");
+        } catch (InterruptedException e) {
+            return FormValidation.error("Fehler beim Stoppen des Selenium Hubs: " + e.getMessage());
         }
     }
 
@@ -118,7 +163,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
     }
 
     private List<String[]> tryFetchFromApi() throws IOException {
-        // Cache für 24 Stunden (86.400.000 Millisekunden)
+        // Cache für 24 Stunden
         if (cachedVersions != null && System.currentTimeMillis() - lastFetchTime < 86400000) {
             return cachedVersions;
         }
@@ -186,9 +231,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         if (!isHubReachable()) {
             return "Hub nicht im Betrieb";
         } else if (!isHubReady()) {
-            return "Hub gestartet, aber keine Nodes registriert";
+            return "Hub gestartet, aber keine Nodes registriert (Url: " + getHubUrl() + ")";
         } else {
-            return "Hub läuft unter <a href=\"" + getHubUrl() + "\" target=\"_blank\">" + getHubUrl() + "</a>";
+            return "Hub läuft unter " + getHubUrl();
         }
     }
 

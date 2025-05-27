@@ -24,15 +24,18 @@
                 </f:bottomButtonBar>
             </f:form>
 
-            <f:form method="post" name="startHubForm" action="startHub">
-                <f:entry title="Selenium Hub starten">
-                    <j:if test="${!it.hubRunning}">
-                        <f:submit value="Starten"/>
-                    </j:if>
-                    <j:if test="${it.hubRunning}">
-                        Hub ist bereits gestartet.
-                    </j:if>
+            <f:form method="post" name="startStopHubForm" action="${it.hubRunning ? 'stopHub' : 'startHub'}">
+                <f:entry title="Selenium Hub Steuerung">
+                    <j:choose>
+                        <j:when test="${it.hubRunning}">
+                            <f:submit value="Stoppen"/>
+                        </j:when>
+                        <j:otherwise>
+                            <f:submit value="Starten"/>
+                        </j:otherwise>
+                    </j:choose>
                 </f:entry>
+
                 <f:entry title="Hub Status">
                     <j:choose>
                         <j:when test="${it.hubRunning}">
