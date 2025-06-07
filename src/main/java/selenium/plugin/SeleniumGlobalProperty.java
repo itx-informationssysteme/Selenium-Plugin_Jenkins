@@ -109,7 +109,8 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public HttpResponse doStartHub() {
         if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
-            return FormValidation.error("Bitte wählen Sie eine Selenium-Version aus und speichern Sie die Konfiguration.");
+            return FormValidation.error(
+                    "Bitte wählen Sie eine Selenium-Version aus und speichern Sie die Konfiguration.");
         }
 
         try {
