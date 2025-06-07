@@ -1,9 +1,16 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:f="/lib/form">
-    <l:layout title="Selenium Einstellungen">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:l="/lib/layout"
+         xmlns:st="jelly:stapler">
+
+    <l:layout title="Selenium Einstellungen für ${it.computer.displayName}" norefresh="true">
+
+        <st:include it="${it.computer}" page="sidepanel.jelly"/>
+
         <l:main-panel>
             <h1>Selenium Einstellungen für ${it.computer.displayName}</h1>
             <p>Status: ${it.enabled ? "Aktiviert" : "Deaktiviert"}</p>
         </l:main-panel>
+
     </l:layout>
 </j:jelly>
