@@ -1,9 +1,8 @@
 package selenium.plugin;
 
 import hudson.Extension;
-import hudson.model.Action;
-import hudson.model.Computer;
-import hudson.model.TransientComputerActionFactory;
+import hudson.model.*;
+
 import java.util.Collection;
 import java.util.Collections;
 
@@ -11,6 +10,12 @@ import java.util.Collections;
 public class SeleniumAgentProperty extends TransientComputerActionFactory {
     @Override
     public Collection<? extends Action> createFor(Computer target) {
+        Node node = target.getNode();
+
+        if (node != null && "Jenkins".equals(node.getSearchName())) {
+            return Collections.singletonList(ManagementLink.all().get(SeleniumGlobalProperty.class));
+        }
+
         return Collections.singletonList(new SeleniumAgentAction(target));
     }
 }
