@@ -2,7 +2,6 @@ package selenium.plugin;
 
 import hudson.Extension;
 import hudson.model.*;
-
 import java.util.Collection;
 import java.util.Collections;
 
