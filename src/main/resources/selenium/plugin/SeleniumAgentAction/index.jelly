@@ -13,8 +13,8 @@
             <p style="font-weight: bold;">Selenium Version:</p>
             <p>${it.version}</p>
 
-            <f:form method="post" name="startStopHubForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
-                <f:entry title="Selenium Hub Steuerung">
+            <f:form method="post" name="startStopNodeForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
+                <f:entry title="Selenium Node Steuerung">
                     <j:choose>
                         <j:when test="${it.nodeActive}">
                             <f:submit value="Stoppen"/>
@@ -25,7 +25,7 @@
                     </j:choose>
                 </f:entry>
 
-                <f:entry title="Hub Status">
+                <f:entry title="Node Status">
                     <j:choose>
                         <j:when test="${it.nodeActive}">
                             <div style="color:green;">Active</div>

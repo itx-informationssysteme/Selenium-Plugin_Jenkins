@@ -9,6 +9,8 @@ import hudson.model.ManagementLink;
 import hudson.model.TaskListener;
 import java.io.IOException;
 import java.net.URL;
+
+import hudson.util.FormValidation;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 
@@ -49,6 +51,10 @@ public class SeleniumAgentAction implements Action {
     }
 
     public HttpResponse doStartNode() {
+        if (!ManagementLink.all().get(SeleniumGlobalProperty.class).getHubActive()) {
+            return FormValidation.error(
+                    "Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");
+        }
         try {
             FilePath tmp = computer.getNode().getRootPath().child("selenium-tmp");
             tmp.mkdirs();
