@@ -54,7 +54,6 @@ public class SeleniumGlobalProperty extends ManagementLink {
         save();
     }
 
-    // Methode zum Speichern der Konfiguration
     private void save() {
         try {
             Jenkins.get().save();

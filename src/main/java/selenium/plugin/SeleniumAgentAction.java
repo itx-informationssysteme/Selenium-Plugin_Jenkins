@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.net.URL;
 
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 
@@ -23,6 +25,12 @@ public class SeleniumAgentAction implements Action {
 
     public SeleniumAgentAction(Computer computer) {
         this.computer = computer;
+    }
+
+    @DataBoundSetter
+    public void setNodeProcess(Proc nodeProcess) {
+        this.nodeProcess = nodeProcess;
+        save();
     }
 
     @Override
@@ -50,6 +58,14 @@ public class SeleniumAgentAction implements Action {
         return ManagementLink.all().get(SeleniumGlobalProperty.class).getSeleniumVersion();
     }
 
+    private void save() {
+        try {
+            Jenkins.get().save();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save configuration", e);
+        }
+    }
+
     public HttpResponse doStartNode() {
         if (!ManagementLink.all().get(SeleniumGlobalProperty.class).getHubActive()) {
             return FormValidation.error(
@@ -74,7 +90,7 @@ public class SeleniumAgentAction implements Action {
                     .pwd(tmp)
                     .stdout(TaskListener.NULL);
 
-            nodeProcess = ps.start();
+            setNodeProcess(ps.start());
             nodeActive = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,13 +100,15 @@ public class SeleniumAgentAction implements Action {
     }
 
     public HttpResponse doStopNode() {
-        if (nodeProcess != null) {
-            try {
-                nodeProcess.kill();
-                nodeProcess.wait();
-            } catch (InterruptedException | IOException ignored) {
+        synchronized (this) { // oder synchronized (nodeProcess), wenn nodeProcess nicht null ist
+            if (nodeProcess != null) {
+                try {
+                    nodeProcess.kill();
+                } catch (IOException | InterruptedException e) {
+                    return FormValidation.error("Fehler beim Stoppen des Selenium Nodes: " + e.getMessage());
+                }
+                setNodeProcess(null);
             }
-            nodeProcess = null;
         }
         nodeActive = false;
         return new HttpRedirect(".");
