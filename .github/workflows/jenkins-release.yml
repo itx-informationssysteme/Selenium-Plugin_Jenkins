@@ -1,68 +1,54 @@
-name: CI – Build Jenkins Plugin
+name: CI – Build & Release Jenkins Plugin
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
   pull_request:
-    branches:
-      - main
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
 
 jobs:
-  build-pr:
+  build-check:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Build Plugin (PR check)
+      - name: Build Plugin (Check)
         run: mvn --batch-mode clean package
         env:
           MAVEN_OPTS: "-Xmx1024m"
 
-  build-release:
-    if: github.ref == 'refs/heads/main'
-    needs: build-pr
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Java 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Build .hpi
         run: mvn --batch-mode clean package
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create GitHub Release & Upload .hpi
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body: >-
-            Automatisch erzeugtes Jenkins Plugin Release für Tag `${{ github.ref_name }}`.
+          name: Release ${{ github.ref_name }}
+          body: Automatically generated plugin release for `${{ github.ref_name }}`
+          files: target/*.hpi
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload HPI Asset
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          asset_path: target/*.hpi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
