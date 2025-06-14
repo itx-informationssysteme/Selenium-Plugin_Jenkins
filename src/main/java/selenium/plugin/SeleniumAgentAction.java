@@ -86,7 +86,7 @@ public class SeleniumAgentAction implements Action {
 
             Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), Boolean.TRUE.equals(computer.isUnix()));
             Launcher.ProcStarter ps = launcher.launch()
-                    .cmds("java", "-jar", jar.getRemote(), "node", "--hub", "http://localhost:4444/")
+                    .cmds("java", "-jar", jar.getRemote(), "node", "--selenium-manager", "true", "--hub", ManagementLink.all().get(SeleniumGlobalProperty.class).getHubUrl())
                     .pwd(tmp)
                     .stdout(TaskListener.NULL);
 

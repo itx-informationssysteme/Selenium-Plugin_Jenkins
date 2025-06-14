@@ -218,7 +218,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public boolean isHubReachable() {
         try {
-            URL statusUrl = new URL("http://localhost:4444/status");
+            URL statusUrl = new URL(getHubUrl() + "/status");
             try (InputStream in = statusUrl.openStream()) {
                 IOUtils.toString(in, "UTF-8"); // nur aufrufbar = erreichbar
                 return true;
@@ -230,7 +230,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public Boolean isHubReady() {
         try {
-            URL statusUrl = new URL("http://localhost:4444/status");
+            URL statusUrl = new URL(getHubUrl() +"/status");
             try (InputStream in = statusUrl.openStream()) {
                 String response = IOUtils.toString(in, "UTF-8");
                 JSONObject status = JSONObject.fromObject(response);
@@ -247,9 +247,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         } else if (!isHubReachable()) {
             return "Hub nicht im Betrieb";
         } else if (!isHubReady()) {
-            return "Hub gestartet, aber keine Nodes registriert (Url: " + getHubUrl() + ")";
+            return "Hub gestartet, aber keine Nodes registriert (Url: " + getHubUrl() + "/ui/)";
         } else {
-            return "Hub läuft unter " + getHubUrl();
+            return "Hub läuft unter " + getHubUrl() + "/ui/";
         }
     }
 
@@ -258,6 +258,17 @@ public class SeleniumGlobalProperty extends ManagementLink {
     }
 
     public String getHubUrl() {
-        return "http://localhost:4444/ui";
+        String jenkinsUrl = Jenkins.get().getRootUrl();
+        if (jenkinsUrl == null) {
+            return "http://localhost:4444";
+        }
+
+        try {
+            URL url = new URL(jenkinsUrl);
+            return new URL(url.getProtocol(), url.getHost(), 4444, "").toString();
+        } catch (Exception e) {
+            return "http://localhost:4444";
+        }
     }
+
 }
