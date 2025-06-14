@@ -30,7 +30,7 @@ jobs:
           MAVEN_OPTS: "-Xmx1024m"
 
   build-release:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    if: github.ref == 'refs/heads/main'
     needs: build-pr
     runs-on: ubuntu-latest
     steps:
