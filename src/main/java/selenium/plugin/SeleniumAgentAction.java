@@ -9,12 +9,12 @@ import hudson.model.ManagementLink;
 import hudson.model.TaskListener;
 import java.io.IOException;
 import java.net.URL;
-
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 public class SeleniumAgentAction implements Action {
 
@@ -66,7 +66,9 @@ public class SeleniumAgentAction implements Action {
         }
     }
 
+    @RequirePOST
     public HttpResponse doStartNode() {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (!ManagementLink.all().get(SeleniumGlobalProperty.class).getHubActive()) {
             return FormValidation.error(
                     "Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");
@@ -99,8 +101,10 @@ public class SeleniumAgentAction implements Action {
         return new HttpRedirect(".");
     }
 
+    @RequirePOST
     public HttpResponse doStopNode() {
-        synchronized (this) { // oder synchronized (nodeProcess), wenn nodeProcess nicht null ist
+        synchronized (this) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (nodeProcess != null) {
                 try {
                     nodeProcess.kill();

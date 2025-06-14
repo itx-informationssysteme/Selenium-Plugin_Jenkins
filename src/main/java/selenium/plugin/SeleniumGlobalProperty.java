@@ -22,6 +22,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 @Extension
 public class SeleniumGlobalProperty extends ManagementLink {
@@ -62,7 +63,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         }
     }
 
+    @RequirePOST
     public HttpResponse doSave(@QueryParameter String seleniumVersion) {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         setSeleniumVersion(seleniumVersion);
         return new HttpRedirect(".");
     }
@@ -98,6 +101,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
     }
 
     public ListBoxModel doFillSeleniumVersionItems() {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         ListBoxModel items = new ListBoxModel();
         List<String[]> versions = fetchSeleniumVersions();
         for (String[] version : versions) {
@@ -106,7 +110,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         return items;
     }
 
+    @RequirePOST
     public HttpResponse doStartHub() {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
             return FormValidation.error(
                     "Bitte wählen Sie eine Selenium-Version aus und speichern Sie die Konfiguration.");
@@ -149,7 +155,9 @@ public class SeleniumGlobalProperty extends ManagementLink {
         }
     }
 
+    @RequirePOST
     public HttpResponse doStopHub() {
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (hubProcess == null) {
             return FormValidation.error("Kein Prozess vorhanden.");
         }
