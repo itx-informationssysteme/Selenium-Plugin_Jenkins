@@ -1,0 +1,43 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:l="/lib/layout"
+         xmlns:st="jelly:stapler"
+         xmlns:f="/lib/form">
+
+    <l:layout title="Selenium Einstellungen für ${it.computer.displayName}" norefresh="true">
+
+        <st:include it="${it.computer}" page="sidepanel.jelly"/>
+
+        <l:main-panel>
+            <h1>Selenium Einstellungen für ${it.computer.displayName}</h1>
+            <p style="font-weight: bold;">Selenium Version:</p>
+            <p>${it.version}</p>
+
+            <f:form method="post" name="startStopNodeForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
+                <f:entry title="Selenium Node Steuerung">
+                    <j:choose>
+                        <j:when test="${it.nodeActive}">
+                            <f:submit value="Stoppen"/>
+                        </j:when>
+                        <j:otherwise>
+                            <f:submit value="Starten"/>
+                        </j:otherwise>
+                    </j:choose>
+                </f:entry>
+
+                <f:entry title="Node Status">
+                    <j:choose>
+                        <j:when test="${it.nodeActive}">
+                            <div style="color:green;">Active</div>
+                        </j:when>
+                        <j:otherwise>
+                            <div style="color:red;">Inactive</div>
+                        </j:otherwise>
+                    </j:choose>
+                </f:entry>
+            </f:form>
+
+        </l:main-panel>
+
+    </l:layout>
+</j:jelly>

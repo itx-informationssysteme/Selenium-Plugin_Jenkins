@@ -8,6 +8,9 @@ TODO Describe what your plugin does here
 
 `mvn clean verify`
 
+on failure run:
+`mvn spotless:apply`
+
 `mvn -Dhost=0.0.0.0 hpi:run`
 
 ## Issues

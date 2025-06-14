@@ -1,0 +1,52 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+    <l:layout title="Selenium verwalten">
+        <l:main-panel>
+            <f:form method="post" name="config" action="save">
+                <f:entry title="Selenium Version">
+                    <select name="seleniumVersion" style="width: 200px;">
+                        <option value="">-- Bitte wählen --</option>
+                        <j:forEach var="v" items="${it.doFillSeleniumVersionItems()}">
+                            <j:choose>
+                                <j:when test="${it.seleniumVersion != null and it.seleniumVersion.equals(v.value)}">
+                                    <option value="${v.value}" selected="selected">${v.name}</option>
+                                </j:when>
+                                <j:otherwise>
+                                    <option value="${v.value}">${v.name}</option>
+                                </j:otherwise>
+                            </j:choose>
+                        </j:forEach>
+                    </select>
+                </f:entry>
+
+                <f:bottomButtonBar>
+                    <f:submit value="Speichern"/>
+                </f:bottomButtonBar>
+            </f:form>
+
+            <f:form method="post" name="startStopHubForm" action="${it.hubRunning ? 'stopHub' : 'startHub'}">
+                <f:entry title="Selenium Hub Steuerung">
+                    <j:choose>
+                        <j:when test="${it.hubRunning}">
+                            <f:submit value="Stoppen"/>
+                        </j:when>
+                        <j:otherwise>
+                            <f:submit value="Starten"/>
+                        </j:otherwise>
+                    </j:choose>
+                </f:entry>
+
+                <f:entry title="Hub Status">
+                    <j:choose>
+                        <j:when test="${it.hubRunning}">
+                            <div style="color:green;">${it.hubStatusText}</div>
+                        </j:when>
+                        <j:otherwise>
+                            <div style="color:red;">${it.hubStatusText}</div>
+                        </j:otherwise>
+                    </j:choose>
+                </f:entry>
+            </f:form>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
