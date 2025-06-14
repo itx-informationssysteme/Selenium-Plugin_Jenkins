@@ -100,6 +100,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
         return "/plugin/selenium-plugin/images/selenium-icon.png";
     }
 
+    @RequirePOST
     public ListBoxModel doFillSeleniumVersionItems() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         ListBoxModel items = new ListBoxModel();
