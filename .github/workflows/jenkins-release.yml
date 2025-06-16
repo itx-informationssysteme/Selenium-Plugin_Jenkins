@@ -1,24 +1,27 @@
 name: CI – Build & Release Jenkins Plugin
 
 on:
-  pull_request:
-    branches: [main]
   push:
     branches: [main]
     tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
 
 jobs:
   build-check:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['11', '17', '21']
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Java 17
+      - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ matrix.java }}
 
       - name: Build Plugin (Check)
         run: mvn --batch-mode clean package
@@ -26,27 +29,31 @@ jobs:
           MAVEN_OPTS: "-Xmx1024m"
 
   release:
-    if: github.ref == 'refs/heads/main'
     needs: build-check
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        java: ['11', '17', '21']
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Java 17
+      - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ matrix.java }}
 
       - name: Build .hpi
-        run: mvn --batch-mode clean package
+        run: mvn --batch-mode clean package -DskipTests
 
-      - name: Create GitHub Release & Upload .hpi
+      - name: Create GitHub Release for Java ${{ matrix.java }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: Automatically generated plugin release for `${{ github.ref_name }}`
+          tag_name: "${{ github.ref_name }}-java${{ matrix.java }}"
+          name: "Release ${{ github.ref_name }} (Java ${{ matrix.java }})"
+          body: |
+            Automatischer Release für `${{ github.ref_name }}` auf Java ${{ matrix.java }}
           files: target/*.hpi
           draft: false
           prerelease: false
