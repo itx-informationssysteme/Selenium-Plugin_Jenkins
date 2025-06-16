@@ -10,11 +10,11 @@
   </parent>
 
   <groupId>io.jenkins.plugins</groupId>
-  <artifactId>Selenium-Plugin_Jenkins</artifactId>
+  <artifactId>selenium-plugin</artifactId>
   <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
 
-  <name>TODO Plugin</name>
+  <name>Selenium Plugin</name>
   <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   <licenses>
     <license>
@@ -30,10 +30,9 @@
   </scm>
 
   <properties>
-    <revision>1.0</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <revision>1.0.0-SNAPSHOT</revision>
+    <changelist></changelist>
 
-    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
     <jenkins.version>2.440.3</jenkins.version>
     <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
 
