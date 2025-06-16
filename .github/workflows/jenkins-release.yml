@@ -55,7 +55,7 @@ jobs:
           tag_name: v${{ github.run_number }}-java${{ matrix.java }}
           name: "Release v${{ github.run_number }}-java${{ matrix.java }}"
           body: |
-            Automatischer Release für v${{ github.run_number }}-java${{ matrix.java }}
+            Automatically generated release v${{ github.run_number }}-java${{ matrix.java }}
           files: target/*.hpi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
