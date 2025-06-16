@@ -289,13 +289,16 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public boolean hasSeleniumServer(Computer computer) throws IOException, InterruptedException {
         if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
-            return getHubActive();
+            return isHubReachable();
         }
         SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
         return action != null && action.getNodeActive();
     }
 
     public String getAgentUrl(Computer computer) {
+        if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
+            return Jenkins.get().getRootUrl() + "computer/(built-in)/selenium-settings";
+        }
         return Jenkins.get().getRootUrl() + "computer/" + computer.getName() + "/selenium";
     }
 

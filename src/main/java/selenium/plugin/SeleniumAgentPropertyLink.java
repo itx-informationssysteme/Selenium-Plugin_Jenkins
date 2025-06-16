@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 @Extension
-public class SeleniumAgentProperty extends TransientComputerActionFactory {
+public class SeleniumAgentPropertyLink extends TransientComputerActionFactory {
     @Override
     public Collection<? extends Action> createFor(Computer target) {
         Node node = target.getNode();
