@@ -30,7 +30,7 @@ jobs:
   release:
     needs: build-check
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     strategy:
       matrix:
         java: ['11', '17', '21']
