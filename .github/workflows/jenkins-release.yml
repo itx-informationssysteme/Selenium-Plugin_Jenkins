@@ -30,7 +30,7 @@ jobs:
   release:
     needs: build-check
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     strategy:
       matrix:
         java: ['11', '17', '21']
@@ -47,17 +47,15 @@ jobs:
         run: mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" -DgenerateBackupPoms=false
 
       - name: Build .hpi
-        id: build
-        run: mvn clean package
+        run: mvn --batch-mode clean package
 
-      - name: Create GitHub Release for Java ${{ matrix.java }}
-        uses: zendesk/action-create-release@v2
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          auto_increment_type: patch
-          tag_schema: continuous
-          release_name: "Java ${{ matrix.java }} – build #${{ github.run_number }}"
+          tag_name: $TAG
+          name: "Release $TAG (Java ${{ matrix.java }})"
           body: |
-            Automatically created Release für Java ${{ matrix.java }},
-            Build #${{ github.run_number }}, Commit `${{ github.sha::8 }}`
+            Automatischer Release für $TAG
+          files: target/*.hpi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
