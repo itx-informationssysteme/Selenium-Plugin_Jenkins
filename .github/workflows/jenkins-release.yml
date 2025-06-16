@@ -48,23 +48,26 @@ jobs:
           java-version: ${{ matrix.java }}
 
       - name: Set dynamic version
-        run: |
-          mvn versions:set \
-            -DnewVersion="${REVISION}.${SHA::8}" \
-            -DgenerateBackupPoms=false
+        run: mvn versions:set -DnewVersion="${REVISION}.${SHA::8}"
 
       - name: Build .hpi
         run: mvn --batch-mode clean package -DskipTests
 
-      - name: Create GitHub Release for Java ${{ matrix.java }}
+      - name: Create Git tag
+        run: |
+          TAG="ci-rev${REVISION}.${SHA::8}-java${{ matrix.java }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "..."
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "${{ github.ref_name || 'main' }}-rev${REVISION}.${SHA::8}-java${{ matrix.java }}"
-          name: "Release rev${REVISION}.${SHA::8} (Java ${{ matrix.java }})"
+          tag_name: $TAG
+          name: "Release $TAG"
           body: |
-            Automatischer Release: Build #${REVISION}, Commit `${SHA::8}`, Java ${{ matrix.java }}
+            Automatischer Release für $TAG
           files: target/*.hpi
-          draft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
