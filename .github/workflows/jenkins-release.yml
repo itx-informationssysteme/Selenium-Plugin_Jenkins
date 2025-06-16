@@ -27,51 +27,36 @@ jobs:
         env:
           MAVEN_OPTS: "-Xmx1024m"
 
-  create_release:
+  release:
     needs: build-check
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Create annotated Git tag
-        id: tag
-        run: |
-          TAG="ci-${{ github.run_number }}.${{ github.sha::8 }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Auto-release $TAG"
-          git push origin "$TAG"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          release_name: "Release ${{ steps.tag.outputs.tag }}"
-          body: "Automatisch generierter Release ${{ steps.tag.outputs.tag }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  upload_release:
-    needs: create_release
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         java: ['11', '17', '21']
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
+
+      - name: Set dynamic version
+        run: mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" -DgenerateBackupPoms=false
+
       - name: Build .hpi
-        run: mvn --batch-mode clean package -DskipTests
-      - name: Upload .hpi to Release
+        run: mvn --batch-mode clean package
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.create_release.outputs.tag }}
+          tag_name: "${{ steps.buildnum.outputs.build_number }}-java${{ matrix.java }}"
+          release_name: "Release ${{ steps.buildnum.outputs.build_number }}‑Java${{ matrix.java }}"
+          body: |
+            Automatischer Release  
+            Run #${{ github.run_number }}, Commit `${{ github.sha::8 }}`, Java ${{ matrix.java }}
           files: target/*.hpi
-          release_name: "Release ${{ needs.create_release.outputs.tag }} – Java ${{ matrix.java }}"
-          body: "Java ${{ matrix.java }} build #${{ github.run_number }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
