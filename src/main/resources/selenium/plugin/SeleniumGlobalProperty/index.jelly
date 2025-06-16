@@ -156,34 +156,43 @@
                                     </tr>
                                 </table>
 
-                                <h4 style="margin-top:10px;">Verfügbare Slots (${node.slots.size()})</h4>
-                                <table class="pane" style="width:100%;">
-                                    <thead>
-                                        <tr>
-                                            <th class="pane-header">Browser</th>
-                                            <th class="pane-header">Plattform</th>
-                                            <th class="pane-header">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <j:forEach var="slot" items="${node.slots}">
-                                            <tr>
-                                                <td class="pane">${slot.stereotype.browserName}</td>
-                                                <td class="pane">${slot.stereotype.platformName}</td>
-                                                <td class="pane">
-                                                    <j:choose>
-                                                        <j:when test="${slot.session.toString() == 'null'}">
-                                                            <span style="color:green;">Frei</span>
-                                                        </j:when>
-                                                        <j:otherwise>
-                                                            <span style="color:orange;">Belegt (Session: ${slot.session.id})</span>
-                                                        </j:otherwise>
-                                                    </j:choose>
-                                                </td>
-                                            </tr>
-                                        </j:forEach>
-                                    </tbody>
-                                </table>
+                                <!-- Einklappbarer Slots-Bereich -->
+                                <div style="margin-top:10px;">
+                                    <a href="javascript:void(0)"
+                                       onclick="toggleSlots('slots-${loop.index}')"
+                                       style="text-decoration:none; color:#333; font-weight:bold;">
+                                        <span id="slots-toggle-${loop.index}">▼</span> Slots anzeigen (${node.slots.size()})
+                                    </a>
+                                    <div id="slots-${loop.index}" style="display:none; margin-top:10px;">
+                                        <table class="pane" style="width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th class="pane-header">Browser</th>
+                                                    <th class="pane-header">Plattform</th>
+                                                    <th class="pane-header">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <j:forEach var="slot" items="${node.slots}">
+                                                    <tr>
+                                                        <td class="pane">${slot.stereotype.browserName}</td>
+                                                        <td class="pane">${slot.stereotype.platformName}</td>
+                                                        <td class="pane">
+                                                            <j:choose>
+                                                                <j:when test="${slot.session.toString() == 'null'}">
+                                                                    <span style="color:green;">Frei</span>
+                                                                </j:when>
+                                                                <j:otherwise>
+                                                                    <span style="color:orange;">Belegt (Session: ${slot.session.id})</span>
+                                                                </j:otherwise>
+                                                            </j:choose>
+                                                        </td>
+                                                    </tr>
+                                                </j:forEach>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </j:forEach>
                     </j:if>
@@ -194,6 +203,20 @@
                     </j:if>
                 </f:entry>
             </f:section>
+
+            <script>
+                function toggleSlots(id) {
+                var element = document.getElementById(id);
+                var toggle = document.getElementById(id.replace('slots-', 'slots-toggle-'));
+                if (element.style.display === "none") {
+                element.style.display = "block";
+                toggle.textContent = "▲";
+                } else {
+                element.style.display = "none";
+                toggle.textContent = "▼";
+                }
+                }
+            </script>
 
         </l:main-panel>
     </l:layout>
