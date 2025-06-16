@@ -52,10 +52,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.buildnum.outputs.build_number }}-java${{ matrix.java }}
-          name: "Release $TAG (Java ${{ matrix.java }})"
+          tag_name: v${{ github.run_number }}-java${{ matrix.java }}
+          name: "Release v${{ github.run_number }}-java${{ matrix.java }}"
           body: |
-            Automatischer Release für ${{ steps.buildnum.outputs.build_number }}-java${{ matrix.java }}
+            Automatischer Release für v${{ github.run_number }}-java${{ matrix.java }}
           files: target/*.hpi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
