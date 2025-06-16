@@ -302,4 +302,22 @@ public class SeleniumGlobalProperty extends ManagementLink {
         return Jenkins.get().getRootUrl() + "computer/" + computer.getName() + "/selenium";
     }
 
+    public JSONObject getGridStatus() {
+        try {
+            URL statusUrl = new URL(getHubUrl() + "/status");
+            try (InputStream in = statusUrl.openStream()) {
+                String response = IOUtils.toString(in, "UTF-8");
+                return JSONObject.fromObject(response);
+            }
+        } catch (IOException e) {
+            JSONObject errorStatus = new JSONObject();
+            JSONObject value = new JSONObject();
+            value.put("ready", false);
+            value.put("message", "Hub nicht erreichbar: " + e.getMessage());
+            value.put("nodes", new JSONArray());
+            errorStatus.put("value", value);
+            return errorStatus;
+        }
+    }
+
 }
