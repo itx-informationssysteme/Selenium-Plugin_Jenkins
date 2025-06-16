@@ -44,18 +44,23 @@ jobs:
           java-version: ${{ matrix.java }}
 
       - name: Set dynamic version
-        run: mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" -DgenerateBackupPoms=false
+        run: |
+          mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" \
+            -DgenerateBackupPoms=false
 
       - name: Build .hpi
-        run: mvn --batch-mode clean package
+        id: build
+        run: mvn --batch-mode clean package \
+          -Drevision="${{ github.run_number }}.${GITHUB_SHA::8}"
 
-      - name: Create Release for Java ${{ matrix.java }}
+      - name: Create GitHub Release for Java ${{ matrix.java }}
         uses: zendesk/action-create-release@v2
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: 'minor'
-          files: 'target/*.hpi'
-          tag-prefix: 'java'
-          tag-separator: '-'
-          name-template: 'Release {{tag_name}} (Java ${{ matrix.java }})'
-          body-template: 'Automatischer Release für Java ${{ matrix.java }}, Run #${{ github.run_number }}'
+          auto_increment_type: patch
+          tag_schema: continuous
+          release_name: "Java ${{ matrix.java }} – build #${{ github.run_number }}"
+          body: |
+            Automatically created Release für Java ${{ matrix.java }},
+            Build #${{ github.run_number }}, Commit `${{ github.sha::8 }}`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
