@@ -3,7 +3,6 @@ name: CI – Build & Release Jenkins Plugin
 on:
   push:
     branches: [main]
-    tags: ['v*.*.*']
   pull_request:
     branches: [main]
 
@@ -34,10 +33,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     strategy:
       matrix:
-        java: [ '11', '17', '21' ]
-    env:
-      REVISION: ${{ github.run_number }}
-      SHA: ${{ github.sha }}
+        java: ['11', '17', '21']
     steps:
       - uses: actions/checkout@v3
 
@@ -48,26 +44,18 @@ jobs:
           java-version: ${{ matrix.java }}
 
       - name: Set dynamic version
-        run: mvn versions:set -DnewVersion="${REVISION}.${SHA::8}"
+        run: mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" -DgenerateBackupPoms=false
 
       - name: Build .hpi
-        run: mvn --batch-mode clean package -DskipTests
+        run: mvn --batch-mode clean package
 
-      - name: Create Git tag
-        run: |
-          TAG="ci-rev${REVISION}.${SHA::8}-java${{ matrix.java }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "..."
-          git tag "$TAG"
-          git push origin "$TAG"
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Create Release for Java ${{ matrix.java }}
+        uses: zendesk/action-create-release@v2
         with:
-          tag_name: $TAG
-          name: "Release $TAG"
-          body: |
-            Automatischer Release für $TAG
-          files: target/*.hpi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: 'minor'
+          files: 'target/*.hpi'
+          tag-prefix: 'java'
+          tag-separator: '-'
+          name-template: 'Release {{tag_name}} (Java ${{ matrix.java }})'
+          body-template: 'Automatischer Release für Java ${{ matrix.java }}, Run #${{ github.run_number }}'
