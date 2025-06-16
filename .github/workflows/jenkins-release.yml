@@ -31,10 +31,13 @@ jobs:
   release:
     needs: build-check
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     strategy:
       matrix:
-        java: ['11', '17', '21']
+        java: [ '11', '17', '21' ]
+    env:
+      REVISION: ${{ github.run_number }}
+      SHA: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v3
 
@@ -44,16 +47,22 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
 
+      - name: Set dynamic version
+        run: |
+          mvn versions:set \
+            -DnewVersion="${REVISION}.${SHA::8}" \
+            -DgenerateBackupPoms=false
+
       - name: Build .hpi
         run: mvn --batch-mode clean package -DskipTests
 
       - name: Create GitHub Release for Java ${{ matrix.java }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "${{ github.ref_name }}-java${{ matrix.java }}"
-          name: "Release ${{ github.ref_name }} (Java ${{ matrix.java }})"
+          tag_name: "${{ github.ref_name || 'main' }}-rev${REVISION}.${SHA::8}-java${{ matrix.java }}"
+          name: "Release rev${REVISION}.${SHA::8} (Java ${{ matrix.java }})"
           body: |
-            Automatischer Release für `${{ github.ref_name }}` auf Java ${{ matrix.java }}
+            Automatischer Release: Build #${REVISION}, Commit `${SHA::8}`, Java ${{ matrix.java }}
           files: target/*.hpi
           draft: false
           prerelease: false
