@@ -44,14 +44,11 @@ jobs:
           java-version: ${{ matrix.java }}
 
       - name: Set dynamic version
-        run: |
-          mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" \
-            -DgenerateBackupPoms=false
+        run: mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" -DgenerateBackupPoms=false
 
       - name: Build .hpi
         id: build
-        run: mvn --batch-mode clean package \
-          -Drevision="${{ github.run_number }}.${GITHUB_SHA::8}"
+        run: mvn clean package
 
       - name: Create GitHub Release for Java ${{ matrix.java }}
         uses: zendesk/action-create-release@v2
