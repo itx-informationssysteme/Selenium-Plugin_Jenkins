@@ -3,8 +3,10 @@ services:
   jenkins:
     image: jenkins/jenkins:latest-jdk21
     ports:
-      - "8080:8080"
+      - "80:8080"
       - "50000:50000"
+      - "4444:4444"
+      - "4442-4443:4442-4443"
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./selenium-plugin/target:/usr/share/jenkins/ref/plugins/
