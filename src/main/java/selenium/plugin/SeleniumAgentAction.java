@@ -3,12 +3,17 @@ package selenium.plugin;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.Action;
 import hudson.model.Computer;
 import hudson.model.ManagementLink;
 import hudson.model.TaskListener;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -22,9 +27,35 @@ public class SeleniumAgentAction implements Action {
 
     private Proc nodeProcess;
     private boolean nodeActive;
+    private transient List<String> nodeRestartLogs = new ArrayList<>();
+    private transient long lastNodeCheckTime;
 
     public SeleniumAgentAction(Computer computer) {
         this.computer = computer;
+    }
+
+    @Initializer(after = InitMilestone.JOB_LOADED)
+    public static void initAfterStartup() {
+        for (Computer computer : Jenkins.get().getComputers()) {
+            SeleniumAgentAction nodeAction = computer.getAction(SeleniumAgentAction.class);
+            if (nodeAction != null) {
+                nodeAction.checkAndRestartNodeIfNeeded();
+
+                new java.util.Timer().scheduleAtFixedRate(new java.util.TimerTask() {
+                    public void run() {
+                        nodeAction.checkAndRestartNodeIfNeeded();
+                    }
+                }, 300000, 300000); // check node every 5 minutes
+            }
+        }
+    }
+
+    public List<String> getNodeRestartLogs() {
+        return nodeRestartLogs;
+    }
+
+    public void setNodeRestartLogs(List<String> nodeRestartLogs) {
+        this.nodeRestartLogs = nodeRestartLogs;
     }
 
     @DataBoundSetter
@@ -94,9 +125,12 @@ public class SeleniumAgentAction implements Action {
 
             setNodeProcess(ps.start());
             nodeActive = true;
+            addNodeRestartLog("Started Selenium Node");
+            save();
         } catch (Exception e) {
-            e.printStackTrace();
             nodeActive = false;
+            addNodeRestartLog("Error starting Selenium Node: " + e.getMessage());
+            return FormValidation.error("Fehler beim Starten des Selenium Nodes: " + e.getMessage());
         }
         return new HttpRedirect(".");
     }
@@ -109,9 +143,11 @@ public class SeleniumAgentAction implements Action {
                 try {
                     nodeProcess.kill();
                 } catch (IOException | InterruptedException e) {
+                    addNodeRestartLog("Error stopping Selenium Node: " + e.getMessage());
                     return FormValidation.error("Fehler beim Stoppen des Selenium Nodes: " + e.getMessage());
                 }
                 setNodeProcess(null);
+                addNodeRestartLog("Stopped Selenium Node");
             }
         }
         nodeActive = false;
@@ -121,4 +157,25 @@ public class SeleniumAgentAction implements Action {
     public boolean getNodeActive() throws IOException, InterruptedException {
         return nodeProcess != null && nodeProcess.isAlive();
     }
+
+    public synchronized void addNodeRestartLog(String message) {
+        nodeRestartLogs.add(0, new java.util.Date() + ": " + message);
+        if (nodeRestartLogs.size() > 25) {
+            nodeRestartLogs.remove(nodeRestartLogs.size() - 1);
+        }
+        save();
+    }
+
+    public void checkAndRestartNodeIfNeeded() {
+        try {
+            if (nodeActive && (!getNodeActive() || nodeProcess == null)) {
+                addNodeRestartLog("Trigger automatic restart of Selenium Node (Node not reachable or stopped)");
+                doStartNode();
+            }
+        } catch (IOException | InterruptedException e) {
+            addNodeRestartLog("Error checking Selenium Node: " + e.getMessage());
+        }
+    }
+
+
 }
