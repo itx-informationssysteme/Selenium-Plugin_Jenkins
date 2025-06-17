@@ -98,7 +98,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-plugin/images/selenium-icon.png";
+        return "/plugin/selenium-plugin/48x48/selenium.png";
     }
 
     @RequirePOST

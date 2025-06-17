@@ -35,7 +35,7 @@ public class SeleniumAgentAction implements Action {
 
     @Override
     public String getIconFileName() {
-        return "icon.png";
+        return "/plugin/selenium-plugin/48x48/selenium.png";
     }
 
     @Override
