@@ -12,7 +12,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
@@ -31,6 +34,8 @@ public class SeleniumGlobalProperty extends ManagementLink {
     private transient volatile List<String[]> cachedVersions;
     private transient volatile long lastFetchTime;
     private transient Process hubProcess;
+    private transient List<String> hubRestartLogs = new ArrayList<>();
+    private transient long lastHubCheckTime;
 
     private String seleniumVersion;
     private boolean hubActive;
@@ -48,6 +53,22 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public boolean getHubActive() {
         return hubActive;
+    }
+
+    public List<String> getHubRestartLogs() {
+        return hubRestartLogs;
+    }
+
+    public void setHubRestartLogs(List<String> hubRestartLogs) {
+        this.hubRestartLogs = hubRestartLogs;
+    }
+
+    public synchronized void addHubRestartLog(String message) {
+        hubRestartLogs.add(0, new java.util.Date() + ": " + message);
+        if (hubRestartLogs.size() > 25) {
+            hubRestartLogs.remove(hubRestartLogs.size() - 1);
+        }
+        save();
     }
 
     @DataBoundSetter
@@ -74,10 +95,14 @@ public class SeleniumGlobalProperty extends ManagementLink {
     @Initializer(after = InitMilestone.JOB_LOADED)
     public static void initAfterStartup() {
         SeleniumGlobalProperty instance = ManagementLink.all().get(SeleniumGlobalProperty.class);
-        if (instance != null && instance.seleniumVersion != null && instance.hubActive) {
-            if (!instance.isHubReachable()) {
-                instance.doStartHub();
-            }
+        if (instance != null) {
+            instance.checkAndRestartHubIfNeeded();
+
+            new java.util.Timer().scheduleAtFixedRate(new java.util.TimerTask() {
+                public void run() {
+                    instance.checkAndRestartHubIfNeeded();
+                }
+            }, 300000, 300000); // check hub every 5 minutes
         }
     }
 
@@ -137,6 +162,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             this.hubProcess = pb.start();
             this.hubActive = true;
+            addHubRestartLog("Started Selenium Hub");
             save();
 
             int retries = 0;
@@ -153,6 +179,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
             return new HttpRedirect(".");
 
         } catch (IOException e) {
+            addHubRestartLog("Fehler beim Starten des Hubs: " + e.getMessage());
             return FormValidation.error("Fehler beim Starten des Selenium Hubs: " + e.getMessage());
         }
     }
@@ -171,9 +198,11 @@ public class SeleniumGlobalProperty extends ManagementLink {
             hubProcess.waitFor();
             hubProcess = null;
             this.hubActive = false;
+            addHubRestartLog("Stopped Selenium Hub");
             save();
             return new HttpRedirect(".");
         } catch (InterruptedException e) {
+            addHubRestartLog("Error stopping Selenium Hub: " + e.getMessage());
             return FormValidation.error("Fehler beim Stoppen des Selenium Hubs: " + e.getMessage());
         }
     }
@@ -187,32 +216,23 @@ public class SeleniumGlobalProperty extends ManagementLink {
     }
 
     private List<String[]> tryFetchFromApi() throws IOException {
-        // Cache für 24 Stunden
         if (cachedVersions != null && System.currentTimeMillis() - lastFetchTime < 86400000) {
             return cachedVersions;
         }
 
         String apiUrl = "https://api.github.com/repos/SeleniumHQ/selenium/tags";
-        String json = IOUtils.toString(new URL(apiUrl), "UTF-8");
+        String json = IOUtils.toString(new URL(apiUrl), StandardCharsets.UTF_8);
         JSONArray tags = JSONArray.fromObject(json);
 
         List<String[]> versions = tags.stream()
                 .map(obj -> ((JSONObject) obj).getString("name"))
-                .limit(50)
-                .sorted()
+                .filter(version -> version.matches("^selenium-\\d+\\.\\d+\\.\\d+$"))
+                .limit(15)
+                .sorted(Comparator.reverseOrder())
                 .map(version -> new String[] {version, version.replace("selenium-", "")})
                 .collect(Collectors.toList());
 
-        cachedVersions = tags.stream()
-                .map(obj -> ((JSONObject) obj).getString("name"))
-                .limit(50)
-                .sorted()
-                .map(version ->
-                        new String[] {version.replace("selenium-", "cached-selenium-"), version.replace("selenium-", "")
-                        })
-                .collect(Collectors.toList());
-
-        //        cachedVersions = versions;
+        cachedVersions = versions;
         lastFetchTime = System.currentTimeMillis();
         return versions;
     }
@@ -317,6 +337,13 @@ public class SeleniumGlobalProperty extends ManagementLink {
             value.put("nodes", new JSONArray());
             errorStatus.put("value", value);
             return errorStatus;
+        }
+    }
+
+    public void checkAndRestartHubIfNeeded() {
+        if (hubActive && (!isHubReachable() || hubProcess == null)) {
+            addHubRestartLog("Trigger automatic restart of Selenium Hub (Hub not reachable or stopped)");
+            doStartHub();
         }
     }
 

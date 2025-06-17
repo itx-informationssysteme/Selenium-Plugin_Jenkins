@@ -36,6 +36,18 @@
                     </j:choose>
                 </f:entry>
             </f:form>
+            <f:section title="Node Restart Logs">
+                <f:entry>
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                        <j:forEach var="log" items="${it.nodeRestartLogs}">
+                            <div style="padding: 5px 0; border-bottom: 1px solid #eee;">${log}</div>
+                        </j:forEach>
+                        <j:if test="${it.nodeRestartLogs.isEmpty()}">
+                            <div style="color: #666;">Keine Restart-Logs vorhanden</div>
+                        </j:if>
+                    </div>
+                </f:entry>
+            </f:section>
 
         </l:main-panel>
 

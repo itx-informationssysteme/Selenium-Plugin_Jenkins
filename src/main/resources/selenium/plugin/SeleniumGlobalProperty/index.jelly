@@ -45,32 +45,32 @@
                             <div style="color:red;">${it.hubStatusText}</div>
                         </j:otherwise>
                     </j:choose>
-                    <j:if test="${it.hubRunning}">
-                        <f:entry>
-                            <a href="${it.hubUrl}/ui/" target="_blank">
-                                <button type="button">Selenium Hub öffnen</button>
-                            </a>
-                        </f:entry>
-                    </j:if>
                 </f:entry>
+                <j:if test="${it.hubRunning}">
+                    <f:entry>
+                        <a href="${it.hubUrl}/ui/" target="_blank" class="jenkins-button jenkins-button--primary">
+                            Selenium Hub öffnen
+                        </a>
+                    </f:entry>
+                </j:if>
 
             </f:form>
             <f:section title="Selenium Server Status der Agenten">
                 <f:entry>
-                    <table class="pane sortable">
+                    <table class="pane sortable" style="width:100%;">
                         <thead>
                             <tr>
-                                <th class="pane-header">Agent Name</th>
-                                <th class="pane-header">Selenium Server Status</th>
+                                <th class="pane-header" style="text-align:left;">Agent Name</th>
+                                <th class="pane-header" style="text-align:left;">Selenium Server Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             <j:forEach var="agent" items="${it.agents}">
                                 <tr>
-                                    <td class="pane">
+                                    <td class="pane" style="text-align:left;">
                                         <a href="${it.getAgentUrl(agent)}">${agent.displayName}</a>
                                     </td>
-                                    <td class="pane">
+                                    <td class="pane" style="text-align:left;">
                                         <j:choose>
                                             <j:when test="${it.hasSeleniumServer(agent)}">
                                                 <span style="color:green;">Aktiv</span>
@@ -201,6 +201,18 @@
                             Keine Nodes registriert.
                         </div>
                     </j:if>
+                </f:entry>
+            </f:section>
+            <f:section title="Hub Restart Logs">
+                <f:entry>
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                        <j:forEach var="log" items="${it.hubRestartLogs}">
+                            <div style="padding: 5px 0; border-bottom: 1px solid #eee;">${log}</div>
+                        </j:forEach>
+                        <j:if test="${it.hubRestartLogs.isEmpty()}">
+                            <div style="color: #666;">Keine Restart-Logs vorhanden</div>
+                        </j:if>
+                    </div>
                 </f:entry>
             </f:section>
 
