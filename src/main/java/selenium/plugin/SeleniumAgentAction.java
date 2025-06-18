@@ -3,12 +3,12 @@ package selenium.plugin;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Proc;
+import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
-import hudson.model.Action;
-import hudson.model.Computer;
-import hudson.model.ManagementLink;
-import hudson.model.TaskListener;
+import hudson.model.*;
+
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public class SeleniumAgentAction implements Action {
 
     private final Computer computer;
 
-    private Proc nodeProcess;
+    private transient Proc nodeProcess;
     private boolean nodeActive;
     private transient List<String> nodeRestartLogs = new ArrayList<>();
     private transient long lastNodeCheckTime;
@@ -50,6 +50,18 @@ public class SeleniumAgentAction implements Action {
         }
     }
 
+    @Initializer(before = InitMilestone.SYSTEM_CONFIG_LOADED)
+    public static void registerShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            for (Computer computer : Jenkins.get().getComputers()) {
+                SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
+                if (action != null && action.nodeProcess != null) {
+                    action.doStopNode();
+                }
+            }
+        }));
+    }
+
     public List<String> getNodeRestartLogs() {
         return nodeRestartLogs;
     }
@@ -58,9 +70,13 @@ public class SeleniumAgentAction implements Action {
         this.nodeRestartLogs = nodeRestartLogs;
     }
 
-    @DataBoundSetter
     public void setNodeProcess(Proc nodeProcess) {
         this.nodeProcess = nodeProcess;
+    }
+
+    @DataBoundSetter
+    public void setNodeActive(boolean nodeActive) {
+        this.nodeActive = nodeActive;
         save();
     }
 
@@ -89,11 +105,11 @@ public class SeleniumAgentAction implements Action {
         return ManagementLink.all().get(SeleniumGlobalProperty.class).getSeleniumVersion();
     }
 
-    private void save() {
+    public synchronized void save() {
         try {
             Jenkins.get().save();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save configuration", e);
+            throw new RuntimeException("Failed to save Selenium config", e);
         }
     }
 
@@ -124,11 +140,11 @@ public class SeleniumAgentAction implements Action {
                     .stdout(TaskListener.NULL);
 
             setNodeProcess(ps.start());
-            nodeActive = true;
+            setNodeActive(true);
             addNodeRestartLog("Started Selenium Node");
             save();
         } catch (Exception e) {
-            nodeActive = false;
+            setNodeActive(false);
             addNodeRestartLog("Error starting Selenium Node: " + e.getMessage());
             return FormValidation.error("Fehler beim Starten des Selenium Nodes: " + e.getMessage());
         }
@@ -150,7 +166,7 @@ public class SeleniumAgentAction implements Action {
                 addNodeRestartLog("Stopped Selenium Node");
             }
         }
-        nodeActive = false;
+        setNodeActive(false);
         return new HttpRedirect(".");
     }
 
