@@ -23,7 +23,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 public class SeleniumAgentAction implements Action {
 
-    private final Computer computer;
+    private final transient Computer computer;
 
     private transient Proc nodeProcess;
     private boolean nodeActive;
@@ -39,6 +39,7 @@ public class SeleniumAgentAction implements Action {
         for (Computer computer : Jenkins.get().getComputers()) {
             SeleniumAgentAction nodeAction = computer.getAction(SeleniumAgentAction.class);
             if (nodeAction != null) {
+                nodeAction.load();
                 nodeAction.checkAndRestartNodeIfNeeded();
 
                 new java.util.Timer().scheduleAtFixedRate(new java.util.TimerTask() {
@@ -107,15 +108,34 @@ public class SeleniumAgentAction implements Action {
 
     public synchronized void save() {
         try {
+            getConfigFile().write(this);
             Jenkins.get().save();
         } catch (IOException e) {
             throw new RuntimeException("Failed to save Selenium config", e);
         }
     }
 
+    public synchronized void load() {
+        try {
+            if (getConfigFile().exists()) {
+                getConfigFile().unmarshal(this);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load Selenium config", e);
+        }
+    }
+
+
+    private XmlFile getConfigFile() {
+        return new XmlFile(
+                new File(Jenkins.get().getRootDir(),  computer.getName() + "-selenium-config.xml")
+        );
+    }
+
     @RequirePOST
     public HttpResponse doStartNode() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        if (computer.isOffline()) return null;
         if (!ManagementLink.all().get(SeleniumGlobalProperty.class).getHubActive()) {
             return FormValidation.error(
                     "Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");

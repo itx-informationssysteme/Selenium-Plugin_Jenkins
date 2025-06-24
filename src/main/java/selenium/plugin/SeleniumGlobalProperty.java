@@ -362,7 +362,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
                 getConfigFile().unmarshal(this);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to load Selenium config", e);
         }
     }
 
