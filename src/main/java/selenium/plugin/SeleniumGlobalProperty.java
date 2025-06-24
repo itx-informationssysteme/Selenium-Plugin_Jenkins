@@ -1,6 +1,7 @@
 package selenium.plugin;
 
 import hudson.Extension;
+import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Computer;
@@ -77,11 +78,12 @@ public class SeleniumGlobalProperty extends ManagementLink {
         save();
     }
 
-    private void save() {
+    public synchronized void save() {
         try {
+            getConfigFile().write(this);
             Jenkins.get().save();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save configuration", e);
+            throw new RuntimeException("Failed to save Selenium config", e);
         }
     }
 
@@ -96,6 +98,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
     public static void initAfterStartup() {
         SeleniumGlobalProperty instance = ManagementLink.all().get(SeleniumGlobalProperty.class);
         if (instance != null) {
+            instance.load();
             instance.checkAndRestartHubIfNeeded();
 
             new java.util.Timer().scheduleAtFixedRate(new java.util.TimerTask() {
@@ -344,6 +347,22 @@ public class SeleniumGlobalProperty extends ManagementLink {
         if (hubActive && (!isHubReachable() || hubProcess == null)) {
             addHubRestartLog("Trigger automatic restart of Selenium Hub (Hub not reachable or stopped)");
             doStartHub();
+        }
+    }
+
+    private XmlFile getConfigFile() {
+        return new XmlFile(
+                new File(Jenkins.get().getRootDir(), "selenium-config.xml")
+        );
+    }
+
+    public synchronized void load() {
+        try {
+            if (getConfigFile().exists()) {
+                getConfigFile().unmarshal(this);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load Selenium config", e);
         }
     }
 

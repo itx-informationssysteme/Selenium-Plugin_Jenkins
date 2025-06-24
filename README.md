@@ -13,6 +13,13 @@ on failure run:
 
 `mvn -Dhost=0.0.0.0 hpi:run`
 
+if the jenkins instance is running on docker the following ports need to be forwarded:
+
+```
+- "4444:4444"
+- "4442-4443:4442-4443"
+```
+
 ## Issues
 
 TODO Decide where you're going to host your issues, the default is Jenkins JIRA, but you can also enable GitHub issues,
