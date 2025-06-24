@@ -31,7 +31,7 @@
 
   <properties>
     <revision>1.0.0-SNAPSHOT</revision>
-    <changelist></changelist>
+    <changelist />
 
     <jenkins.version>2.440.3</jenkins.version>
     <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>

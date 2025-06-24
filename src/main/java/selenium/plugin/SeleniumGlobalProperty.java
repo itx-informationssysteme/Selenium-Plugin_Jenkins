@@ -56,11 +56,11 @@ public class SeleniumGlobalProperty extends ManagementLink {
         return hubActive;
     }
 
-    public List<String> getHubRestartLogs() {
+    public synchronized List<String> getHubRestartLogs() {
         return hubRestartLogs;
     }
 
-    public void setHubRestartLogs(List<String> hubRestartLogs) {
+    public synchronized void setHubRestartLogs(List<String> hubRestartLogs) {
         this.hubRestartLogs = hubRestartLogs;
     }
 
@@ -101,11 +101,15 @@ public class SeleniumGlobalProperty extends ManagementLink {
             instance.load();
             instance.checkAndRestartHubIfNeeded();
 
-            new java.util.Timer().scheduleAtFixedRate(new java.util.TimerTask() {
-                public void run() {
-                    instance.checkAndRestartHubIfNeeded();
-                }
-            }, 300000, 300000); // check hub every 5 minutes
+            new java.util.Timer()
+                    .scheduleAtFixedRate(
+                            new java.util.TimerTask() {
+                                public void run() {
+                                    instance.checkAndRestartHubIfNeeded();
+                                }
+                            },
+                            300000,
+                            300000); // check hub every 5 minutes
         }
     }
 
@@ -263,7 +267,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public Boolean isHubReady() {
         try {
-            URL statusUrl = new URL(getHubUrl() +"/status");
+            URL statusUrl = new URL(getHubUrl() + "/status");
             try (InputStream in = statusUrl.openStream()) {
                 String response = IOUtils.toString(in, "UTF-8");
                 JSONObject status = JSONObject.fromObject(response);
@@ -351,9 +355,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
     }
 
     private XmlFile getConfigFile() {
-        return new XmlFile(
-                new File(Jenkins.get().getRootDir(), "selenium-config.xml")
-        );
+        return new XmlFile(new File(Jenkins.get().getRootDir(), "selenium-config.xml"));
     }
 
     public synchronized void load() {
@@ -365,5 +367,4 @@ public class SeleniumGlobalProperty extends ManagementLink {
             throw new RuntimeException("Failed to load Selenium config", e);
         }
     }
-
 }

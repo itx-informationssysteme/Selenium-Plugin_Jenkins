@@ -7,14 +7,12 @@ import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.*;
-
+import hudson.util.FormValidation;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
@@ -42,11 +40,15 @@ public class SeleniumAgentAction implements Action {
                 nodeAction.load();
                 nodeAction.checkAndRestartNodeIfNeeded();
 
-                new java.util.Timer().scheduleAtFixedRate(new java.util.TimerTask() {
-                    public void run() {
-                        nodeAction.checkAndRestartNodeIfNeeded();
-                    }
-                }, 300000, 300000); // check node every 5 minutes
+                new java.util.Timer()
+                        .scheduleAtFixedRate(
+                                new java.util.TimerTask() {
+                                    public void run() {
+                                        nodeAction.checkAndRestartNodeIfNeeded();
+                                    }
+                                },
+                                300000,
+                                300000); // check node every 5 minutes
             }
         }
     }
@@ -63,12 +65,12 @@ public class SeleniumAgentAction implements Action {
         }));
     }
 
-    public List<String> getNodeRestartLogs() {
-        return nodeRestartLogs;
+    public synchronized List<String> getNodeRestartLogs() {
+        return new ArrayList<>(nodeRestartLogs);
     }
 
-    public void setNodeRestartLogs(List<String> nodeRestartLogs) {
-        this.nodeRestartLogs = nodeRestartLogs;
+    public synchronized void setNodeRestartLogs(List<String> nodeRestartLogs) {
+        this.nodeRestartLogs = new ArrayList<>(nodeRestartLogs);
     }
 
     public void setNodeProcess(Proc nodeProcess) {
@@ -101,9 +103,11 @@ public class SeleniumAgentAction implements Action {
     }
 
     public String getVersion() {
-        if (ManagementLink.all().get(SeleniumGlobalProperty.class).getSeleniumVersion() == null)
+        SeleniumGlobalProperty globalProp = ManagementLink.all().get(SeleniumGlobalProperty.class);
+        if (globalProp == null || globalProp.getSeleniumVersion() == null) {
             return "No Version set (Change in Selenium Global Configuration)";
-        return ManagementLink.all().get(SeleniumGlobalProperty.class).getSeleniumVersion();
+        }
+        return globalProp.getSeleniumVersion();
     }
 
     public synchronized void save() {
@@ -125,23 +129,37 @@ public class SeleniumAgentAction implements Action {
         }
     }
 
-
     private XmlFile getConfigFile() {
-        return new XmlFile(
-                new File(Jenkins.get().getRootDir(),  computer.getName() + "-selenium-config.xml")
-        );
+        return new XmlFile(new File(Jenkins.get().getRootDir(), computer.getName() + "-selenium-config.xml"));
     }
 
     @RequirePOST
     public HttpResponse doStartNode() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-        if (computer.isOffline()) return null;
-        if (!ManagementLink.all().get(SeleniumGlobalProperty.class).getHubActive()) {
+        if (computer == null || computer.isOffline()) return FormValidation.error("Computer ist offline.");
+        SeleniumGlobalProperty globalProp = ManagementLink.all().get(SeleniumGlobalProperty.class);
+        if (globalProp == null || !globalProp.getHubActive()) {
             return FormValidation.error(
                     "Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");
         }
         try {
-            FilePath tmp = computer.getNode().getRootPath().child("selenium-tmp");
+            FilePath tmp = null;
+            if (computer.getNode() != null) {
+                Node node = computer.getNode();
+                if (node == null) {
+                    return FormValidation.error("Kein Node vorhanden.");
+                }
+
+                FilePath rootPath = node.getRootPath();
+                if (rootPath == null) {
+                    return FormValidation.error("Kein Root-Verzeichnis vorhanden.");
+                }
+
+                tmp = rootPath.child("selenium-tmp");
+            }
+            if (tmp == null) {
+                return FormValidation.error("Kein Temp-Verzeichnis vorhanden.");
+            }
             tmp.mkdirs();
 
             String version = getVersion().replaceAll("[^0-9.]", "");
@@ -153,9 +171,18 @@ public class SeleniumAgentAction implements Action {
                 jar.copyFrom(new URL(jarUrl));
             }
 
-            Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), Boolean.TRUE.equals(computer.isUnix()));
+            Launcher launcher = new Launcher.RemoteLauncher(
+                    TaskListener.NULL, computer.getChannel(), Boolean.TRUE.equals(computer.isUnix()));
             Launcher.ProcStarter ps = launcher.launch()
-                    .cmds("java", "-jar", jar.getRemote(), "node", "--selenium-manager", "true", "--hub", ManagementLink.all().get(SeleniumGlobalProperty.class).getHubUrl())
+                    .cmds(
+                            "java",
+                            "-jar",
+                            jar.getRemote(),
+                            "node",
+                            "--selenium-manager",
+                            "true",
+                            "--hub",
+                            globalProp.getHubUrl())
                     .pwd(tmp)
                     .stdout(TaskListener.NULL);
 
@@ -212,6 +239,4 @@ public class SeleniumAgentAction implements Action {
             addNodeRestartLog("Error checking Selenium Node: " + e.getMessage());
         }
     }
-
-
 }
