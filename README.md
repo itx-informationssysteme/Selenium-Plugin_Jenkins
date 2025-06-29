@@ -1,39 +1,32 @@
-# Selenium-Plugin_Jenkins
+# Selenium Plugin for Jenkins
 
-## Introduction
+A Jenkins plugin that integrates Selenium Grid directly into your Jenkins environment. It allows you to easily configure and run Selenium Hub and Nodes on your Jenkins Agents.
 
-TODO Describe what your plugin does here
+## Release
 
-## Plugin Development
+The can find the latest Release [here](https://github.com/julianboehne/Selenium-Plugin_Jenkins/releases).
 
-`mvn clean verify`
+---
 
-on failure run:
-`mvn spotless:apply`
+## 🛠️ Development & Local Testing
 
-`mvn -Dhost=0.0.0.0 hpi:run`
+To build and run the plugin locally:
 
-if the jenkins instance is running on docker the following ports need to be forwarded:
+```bash
+# Compile, test, and validate code style
+mvn clean verify
 
+# Auto-format (if needed)
+mvn spotless:apply
+
+# Run a local Jenkins instance with the plugin
+mvn -Dhost=0.0.0.0 hpi:run
 ```
-- "4444:4444"
-- "4442-4443:4442-4443"
-```
 
-## Issues
-
-TODO Decide where you're going to host your issues, the default is Jenkins JIRA, but you can also enable GitHub issues,
-If you use GitHub issues there's no need for this section; else add the following line:
-
-Report issues and enhancements in the [Jenkins issue tracker](https://issues.jenkins.io/).
-
-## Contributing
-
-TODO review the default [CONTRIBUTING](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md) file and make sure it is appropriate for your plugin, if not then add your own one adapted from the base file
-
-Refer to our [contribution guidelines](https://github.com/jenkinsci/.github/blob/master/CONTRIBUTING.md)
-
-## LICENSE
-
-Licensed under MIT, see [LICENSE](LICENSE.md)
-
+It's also possible to run the Plugin in a Docker Jenkins Container, but following Ports are required to be exposed:
+- 4444 - Selenium Hub
+- 4442-4443 - Connect Nodes to Selenium Hub
+# Plugin Overlay
+![Plugin Dashboard](images/jenkins-selenium-settings.png)
+![Plugin Agent Dashboard](images/jenkins-selenium-node.png)
+![Selenium-Hub](images/selenium-hub.png)
