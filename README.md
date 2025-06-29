@@ -4,7 +4,7 @@ A Jenkins plugin that integrates Selenium Grid directly into your Jenkins enviro
 
 ## Release
 
-The can find the latest Release [here](https://github.com/julianboehne/Selenium-Plugin_Jenkins/releases).
+You can find the latest Release [here](https://github.com/julianboehne/Selenium-Plugin_Jenkins/releases).
 
 ---
 
