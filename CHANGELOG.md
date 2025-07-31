@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.0.0...v1.0.1) (2025-07-31)
+
+
+### Bug Fixes
+
+* **deps:** bump io.jenkins.tools.incrementals:git-changelist-maven-extension ([#16](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/issues/16)) ([f545e9b](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/f545e9b62d292b3cfe73aec02173fcc2f1508085))
+
 # 1.0.0 (2025-07-31)
 
 
