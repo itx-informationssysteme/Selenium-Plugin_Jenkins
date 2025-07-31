@@ -6,6 +6,15 @@
       "@semantic-release/release-notes-generator",
       ["@semantic-release/changelog", { "changelogFile": "CHANGELOG.md" }],
       ["@semantic-release/git", { "assets": ["CHANGELOG.md"] }],
-      "@semantic-release/github",
+      [
+        "@semantic-release/github",
+        {
+          "assets":
+            [
+              "target/selenium-plugin-jenkins_java-17.hpi",
+              "target/selenium-plugin-jenkins_java-21.hpi",
+            ],
+        },
+      ],
     ],
 }

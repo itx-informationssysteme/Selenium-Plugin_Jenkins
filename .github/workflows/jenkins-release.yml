@@ -27,7 +27,7 @@ jobs:
         env:
           MAVEN_OPTS: "-Xmx1024m"
 
-  release:
+  build-release-artifacts:
     needs: build-check
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
@@ -49,6 +49,30 @@ jobs:
       - name: Build .hpi
         run: mvn --batch-mode clean package
 
+      - name: Rename package (for semantic release)
+        run: mv target/*.hpi target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: java-${{ matrix.java }}-hpi
+          path: target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
+
+      # - name: Semantic Release
+      #   uses: cycjimmy/semantic-release-action@v4
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  semantic-release:
+    needs: build-release-artifacts
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: target/
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4
         env:
