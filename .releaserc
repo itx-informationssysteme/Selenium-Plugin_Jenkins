@@ -11,8 +11,14 @@
         {
           "assets":
             [
-              "target/selenium-plugin-jenkins_java-17.hpi",
-              "target/selenium-plugin-jenkins_java-21.hpi",
+              {
+                "path": "artifacts/selenium-plugin-jenkins_java-17-hpi/selenium-plugin-jenkins_java-17.hpi",
+                "label": "Jenkins Plugin (Java 17)",
+              },
+              {
+                "path": "artifacts/selenium-plugin-jenkins_java-21-hpi/selenium-plugin-jenkins_java-21.hpi",
+                "label": "Jenkins Plugin (Java 21)",
+              },
             ],
         },
       ],
