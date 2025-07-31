@@ -72,14 +72,3 @@ jobs:
         uses: cycjimmy/semantic-release-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-
-      # - name: Create GitHub Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     tag_name: v${{ github.run_number }}-java${{ matrix.java }}
-      #     name: "Release v${{ github.run_number }}-java${{ matrix.java }}"
-      #     body: |
-      #       Automatically generated release v${{ github.run_number }}-java${{ matrix.java }}
-      #     files: target/*.hpi
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
