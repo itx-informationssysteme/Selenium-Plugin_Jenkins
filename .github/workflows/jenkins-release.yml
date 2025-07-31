@@ -53,7 +53,7 @@ jobs:
         run: mv target/*.hpi target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-${{ matrix.java }}-hpi
           path: target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: target/
       - name: Semantic Release
