@@ -43,8 +43,8 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
 
-      - name: Install semantic-release (temporär, ohne package.json)
-        run: npm install semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator
+      - name: Install semantic-release
+        run: npm install semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/changelog
 
       - name: Get Semantic Release Version
         id: semantic_version
