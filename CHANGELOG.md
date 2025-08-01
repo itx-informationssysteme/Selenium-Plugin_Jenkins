@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.0.1...v1.0.2) (2025-08-01)
+
+
+### Bug Fixes
+
+* delete SeleniumProperty in Folder view ([8348789](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/834878964c73d7bc8bdd80792649a29657000cdc))
+
 ## [1.0.1](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.0.0...v1.0.1) (2025-07-31)
 
 
