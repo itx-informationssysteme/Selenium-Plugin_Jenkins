@@ -52,6 +52,8 @@ jobs:
           VERSION=$(npx semantic-release --dry-run | grep -oP 'next release version is \K[0-9]+\.[0-9]+\.[0-9]+')
           echo "Detected version: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Set dynamic version
         run: mvn versions:set -DnewVersion=${{ steps.semantic_version.outputs.VERSION }} -DgenerateBackupPoms=false
