@@ -1,7 +1,6 @@
 services:
-
   jenkins:
-    image: jenkins/jenkins:latest-jdk21
+    image: jenkins/jenkins:latest-jdk17
     ports:
       - "80:8080"
       - "50000:50000"

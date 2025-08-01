@@ -43,8 +43,18 @@ jobs:
           distribution: temurin
           java-version: ${{ matrix.java }}
 
+      - name: Install semantic-release (temporär, ohne package.json)
+        run: npm install semantic-release @semantic-release/commit-analyzer @semantic-release/release-notes-generator
+
+      - name: Get Semantic Release Version
+        id: semantic_version
+        run: |
+          VERSION=$(npx semantic-release --dry-run | grep -oP 'next release version is \K[0-9]+\.[0-9]+\.[0-9]+')
+          echo "Detected version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Set dynamic version
-        run: mvn versions:set -DnewVersion="${{ github.run_number }}.${GITHUB_SHA::8}" -DgenerateBackupPoms=false
+        run: mvn versions:set -DnewVersion=${{ steps.semantic_version.outputs.VERSION }} -DgenerateBackupPoms=false
 
       - name: Build .hpi
         run: mvn --batch-mode clean package
