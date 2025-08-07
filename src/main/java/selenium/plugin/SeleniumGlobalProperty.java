@@ -90,8 +90,44 @@ public class SeleniumGlobalProperty extends ManagementLink {
     @RequirePOST
     public HttpResponse doSave(@QueryParameter String seleniumVersion) {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+
+        boolean versionChanged = !seleniumVersion.equals(this.seleniumVersion);
         setSeleniumVersion(seleniumVersion);
+
+        if (versionChanged) {
+            if (hubActive) {
+                addHubRestartLog("Restarting Selenium Hub for version update");
+                doStopHub();
+                doStartHub();
+                addHubRestartLog("Hub restarted with new version " + seleniumVersion);
+            }
+            addHubRestartLog("Restarting agents for version update");
+            restartAllActiveAgents();
+            addHubRestartLog("Agents restarted with new version " + seleniumVersion);
+        }
+
         return new HttpRedirect(".");
+    }
+
+    private void restartAllActiveAgents() {
+        for (Computer computer : Jenkins.get().getComputers()) {
+            if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
+                continue;
+            }
+
+            SeleniumAgentAction agentAction = computer.getAction(SeleniumAgentAction.class);
+            try {
+                if (agentAction != null && agentAction.getNodeActive()) {
+                    agentAction.addNodeRestartLog("Restarting agent for version update");
+                    agentAction.doStopNode();
+                    agentAction.doStartNode();
+                    agentAction.addNodeRestartLog("Agent restarted with new version " + seleniumVersion);
+                }
+            } catch (Exception e) {
+                agentAction.addNodeRestartLog("Error during agent update: " + e.getMessage());
+                addHubRestartLog("Error during agent update of " + computer.getName() + ": " + e.getMessage());
+            }
+        }
     }
 
     @Initializer(after = InitMilestone.JOB_LOADED)
