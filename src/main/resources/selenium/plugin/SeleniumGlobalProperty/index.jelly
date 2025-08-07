@@ -20,7 +20,7 @@
                 </f:entry>
 
                 <f:bottomButtonBar>
-                    <f:submit value="Speichern"/>
+                    <f:submit value="${%SeleniumGlobalProperty.save}"/>
                 </f:bottomButtonBar>
             </f:form>
 
