@@ -184,8 +184,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
     public HttpResponse doStartHub() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
-            return FormValidation.error(
-                    Messages.SeleniumGlobalProperty_error_select_version());
+            return FormValidation.error(Messages.SeleniumGlobalProperty_error_select_version());
         }
 
         try {
