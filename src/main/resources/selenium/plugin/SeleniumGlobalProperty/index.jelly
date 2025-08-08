@@ -1,11 +1,11 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
-    <l:layout title="Selenium verwalten">
+    <l:layout title="${%SeleniumGlobalProperty.jelly.title}">
         <l:main-panel>
             <f:form method="post" name="config" action="save">
-                <f:entry title="Selenium Version">
+                <f:entry title="${%SeleniumGlobalProperty.jelly.version}">
                     <select name="seleniumVersion" style="width: 200px;">
-                        <option value="">-- Bitte wählen --</option>
+                        <option value="">-- ${%SeleniumGlobalProperty.jelly.please.select} --</option>
                         <j:forEach var="v" items="${it.doFillSeleniumVersionItems()}">
                             <j:choose>
                                 <j:when test="${it.seleniumVersion != null and it.seleniumVersion.equals(v.value)}">
@@ -20,23 +20,23 @@
                 </f:entry>
 
                 <f:bottomButtonBar>
-                    <f:submit value="Speichern"/>
+                    <f:submit value="${%SeleniumGlobalProperty.jelly.save}"/>
                 </f:bottomButtonBar>
             </f:form>
 
             <f:form method="post" name="startStopHubForm" action="${it.hubRunning ? 'stopHub' : 'startHub'}">
-                <f:entry title="Selenium Hub Steuerung">
+                <f:entry title="${%SeleniumGlobalProperty.jelly.control}">
                     <j:choose>
                         <j:when test="${it.hubRunning}">
-                            <f:submit value="Stoppen"/>
+                            <f:submit value="${%SeleniumGlobalProperty.jelly.stop}"/>
                         </j:when>
                         <j:otherwise>
-                            <f:submit value="Starten"/>
+                            <f:submit value="${%SeleniumGlobalProperty.jelly.start}"/>
                         </j:otherwise>
                     </j:choose>
                 </f:entry>
 
-                <f:entry title="Hub Status">
+                <f:entry title="${%SeleniumGlobalProperty.jelly.status}">
                     <j:choose>
                         <j:when test="${it.hubRunning}">
                             <div style="color:green;">${it.hubStatusText}</div>
@@ -49,19 +49,19 @@
                 <j:if test="${it.hubRunning}">
                     <f:entry>
                         <a href="${it.hubUrl}/ui/" target="_blank" class="jenkins-button jenkins-button--primary">
-                            Selenium Hub öffnen
+                            ${%SeleniumGlobalProperty.jelly.open.hub}
                         </a>
                     </f:entry>
                 </j:if>
 
             </f:form>
-            <f:section title="Selenium Server Status der Agenten">
+            <f:section title="${%SeleniumGlobalProperty.jelly.agents.status}">
                 <f:entry>
                     <table class="pane sortable" style="width:100%;">
                         <thead>
                             <tr>
-                                <th class="pane-header" style="text-align:left;">Agent Name</th>
-                                <th class="pane-header" style="text-align:left;">Selenium Server Status</th>
+                                <th class="pane-header" style="text-align:left;">${%SeleniumGlobalProperty.jelly.agents.name}</th>
+                                <th class="pane-header" style="text-align:left;">${%SeleniumGlobalProperty.jelly.server.status}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -73,10 +73,10 @@
                                     <td class="pane" style="text-align:left;">
                                         <j:choose>
                                             <j:when test="${it.hasSeleniumServer(agent)}">
-                                                <span style="color:green;">Aktiv</span>
+                                                <span style="color:green;">${%SeleniumGlobalProperty.jelly.active}</span>
                                             </j:when>
                                             <j:otherwise>
-                                                <span style="color:red;">Inaktiv</span>
+                                                <span style="color:red;">${%SeleniumGlobalProperty.jelly.inactive}</span>
                                             </j:otherwise>
                                         </j:choose>
                                     </td>
@@ -87,37 +87,37 @@
                 </f:entry>
             </f:section>
 
-            <f:section title="Detaillierter Selenium Grid Status">
+            <f:section title="${%SeleniumGlobalProperty.jelly.grid.status}">
                 <f:entry>
                     <j:set var="gridStatus" value="${it.gridStatus}"/>
                     <j:set var="gridValue" value="${gridStatus.value}"/>
 
                     <table class="pane" style="width:100%; margin-bottom:20px;">
                         <tr>
-                            <td class="pane-header" style="width: 150px;">Gesamtstatus</td>
+                            <td class="pane-header" style="width: 150px;">${%SeleniumGlobalProperty.jelly.full.status}</td>
                             <td class="pane">
                                 <j:choose>
                                     <j:when test="${gridValue.ready}">
-                                        <span style="color:green; font-weight:bold;">✔ BEREIT</span>
+                                        <span style="color:green; font-weight:bold;">✔ ${%SeleniumGlobalProperty.jelly.ready}</span>
                                     </j:when>
                                     <j:otherwise>
-                                        <span style="color:red; font-weight:bold;">✖ NICHT BEREIT</span>
+                                        <span style="color:red; font-weight:bold;">✖ ${%SeleniumGlobalProperty.jelly.not.ready}</span>
                                     </j:otherwise>
                                 </j:choose>
                             </td>
                         </tr>
                         <tr>
-                            <td class="pane-header">Statusnachricht</td>
+                            <td class="pane-header">${%SeleniumGlobalProperty.jelly.status.message}</td>
                             <td class="pane">${gridValue.message}</td>
                         </tr>
                         <tr>
-                            <td class="pane-header">Anzahl Nodes</td>
+                            <td class="pane-header">${%SeleniumGlobalProperty.jelly.amount.nodes}</td>
                             <td class="pane">${gridValue.nodes.size()}</td>
                         </tr>
                     </table>
 
                     <j:if test="${!gridValue.nodes.isEmpty()}">
-                        <h3>Registrierte Nodes</h3>
+                        <h3>${%SeleniumGlobalProperty.jelly.registered.nodes}</h3>
                         <j:forEach var="node" items="${gridValue.nodes}" varStatus="loop">
                             <div style="border:1px solid #ddd; margin-bottom:15px; padding:10px; border-radius:4px;">
                                 <table class="pane" style="width:100%;">
@@ -143,33 +143,32 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="pane-header">Version</td>
+                                        <td class="pane-header">${%SeleniumGlobalProperty.jelly.node.version}</td>
                                         <td class="pane">${node.version}</td>
                                     </tr>
                                     <tr>
-                                        <td class="pane-header">Betriebssystem</td>
+                                        <td class="pane-header">${%SeleniumGlobalProperty.jelly.node.os}</td>
                                         <td class="pane">${node.osInfo.name} ${node.osInfo.version} (${node.osInfo.arch})</td>
                                     </tr>
                                     <tr>
-                                        <td class="pane-header">Max Sessions</td>
+                                        <td class="pane-header">${%SeleniumGlobalProperty.jelly.node.max.sessions}</td>
                                         <td class="pane">${node.maxSessions}</td>
                                     </tr>
                                 </table>
 
-                                <!-- Einklappbarer Slots-Bereich -->
                                 <div style="margin-top:10px;">
                                     <a href="javascript:void(0)"
                                        onclick="toggleSlots('slots-${loop.index}')"
                                        style="text-decoration:none; color:#333; font-weight:bold;">
-                                        <span id="slots-toggle-${loop.index}">▼</span> Slots anzeigen (${node.slots.size()})
+                                        <span id="slots-toggle-${loop.index}">▼</span> ${%SeleniumGlobalProperty.jelly.slots.show} (${node.slots.size()})
                                     </a>
                                     <div id="slots-${loop.index}" style="display:none; margin-top:10px;">
                                         <table class="pane" style="width:100%;">
                                             <thead>
                                                 <tr>
-                                                    <th class="pane-header">Browser</th>
-                                                    <th class="pane-header">Plattform</th>
-                                                    <th class="pane-header">Status</th>
+                                                    <th class="pane-header">${%SeleniumGlobalProperty.jelly.slots.browser}</th>
+                                                    <th class="pane-header">${%SeleniumGlobalProperty.jelly.slots.platform}</th>
+                                                    <th class="pane-header">${%SeleniumGlobalProperty.jelly.slots.status}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -180,10 +179,10 @@
                                                         <td class="pane">
                                                             <j:choose>
                                                                 <j:when test="${slot.session.toString() == 'null'}">
-                                                                    <span style="color:green;">Frei</span>
+                                                                    <span style="color:green;">${%SeleniumGlobalProperty.jelly.slots.free}</span>
                                                                 </j:when>
                                                                 <j:otherwise>
-                                                                    <span style="color:orange;">Belegt (Session: ${slot.session.id})</span>
+                                                                    <span style="color:orange;">${%SeleniumGlobalProperty.jelly.slots.occupied}</span>
                                                                 </j:otherwise>
                                                             </j:choose>
                                                         </td>
@@ -198,19 +197,19 @@
                     </j:if>
                     <j:if test="${gridValue.nodes.isEmpty()}">
                         <div style="color:#666; padding:10px; background:#f5f5f5; border-radius:4px;">
-                            Keine Nodes registriert.
+                            ${%SeleniumGlobalProperty.jelly.nodes.not.registered}
                         </div>
                     </j:if>
                 </f:entry>
             </f:section>
-            <f:section title="Hub Restart Logs">
+            <f:section title="${%SeleniumGlobalProperty.jelly.hub.restart.logs}">
                 <f:entry>
                     <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
                         <j:forEach var="log" items="${it.hubRestartLogs}">
                             <div style="padding: 5px 0; border-bottom: 1px solid #eee;">${log}</div>
                         </j:forEach>
                         <j:if test="${it.hubRestartLogs.isEmpty()}">
-                            <div style="color: #666;">Keine Restart-Logs vorhanden</div>
+                            <div style="color: #666;">${%SeleniumGlobalProperty.jelly.no.hub.restart.logs}</div>
                         </j:if>
                     </div>
                 </f:entry>
