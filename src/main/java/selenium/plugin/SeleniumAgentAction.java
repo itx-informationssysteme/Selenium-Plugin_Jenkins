@@ -90,7 +90,7 @@ public class SeleniumAgentAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "Selenium";
+        return Messages.SeleniumAgentAction_title();
     }
 
     @Override
@@ -139,26 +139,26 @@ public class SeleniumAgentAction implements Action {
         if (computer == null || computer.isOffline()) return FormValidation.error("Computer ist offline.");
         SeleniumGlobalProperty globalProp = ManagementLink.all().get(SeleniumGlobalProperty.class);
         if (globalProp == null || !globalProp.getHubActive()) {
-            return FormValidation.error(
-                    "Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");
+            addNodeRestartLog("Selenium Hub is not active. Please start the Hub and try again.");
+            return FormValidation.error(Messages.SeleniumAgentAction_error_hubNotActive());
         }
         try {
             FilePath tmp = null;
             if (computer.getNode() != null) {
                 Node node = computer.getNode();
                 if (node == null) {
-                    return FormValidation.error("Kein Node vorhanden.");
+                    return FormValidation.error("No Node found.");
                 }
 
                 FilePath rootPath = node.getRootPath();
                 if (rootPath == null) {
-                    return FormValidation.error("Kein Root-Verzeichnis vorhanden.");
+                    return FormValidation.error("No RootPath found.");
                 }
 
                 tmp = rootPath.child("selenium-tmp");
             }
             if (tmp == null) {
-                return FormValidation.error("Kein Temp-Verzeichnis vorhanden.");
+                return FormValidation.error("No TempPath found.");
             }
             tmp.mkdirs();
 
@@ -193,7 +193,7 @@ public class SeleniumAgentAction implements Action {
         } catch (Exception e) {
             setNodeActive(false);
             addNodeRestartLog("Error starting Selenium Node: " + e.getMessage());
-            return FormValidation.error("Fehler beim Starten des Selenium Nodes: " + e.getMessage());
+            return FormValidation.error("An error occurred while starting Selenium Node: " + e.getMessage());
         }
         return new HttpRedirect(".");
     }
@@ -207,7 +207,7 @@ public class SeleniumAgentAction implements Action {
                     nodeProcess.kill();
                 } catch (IOException | InterruptedException e) {
                     addNodeRestartLog("Error stopping Selenium Node: " + e.getMessage());
-                    return FormValidation.error("Fehler beim Stoppen des Selenium Nodes: " + e.getMessage());
+                    return FormValidation.error("Error stopping Selenium Node: " + e.getMessage());
                 }
                 setNodeProcess(null);
                 addNodeRestartLog("Stopped Selenium Node");

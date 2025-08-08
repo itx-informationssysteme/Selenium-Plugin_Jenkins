@@ -90,8 +90,44 @@ public class SeleniumGlobalProperty extends ManagementLink {
     @RequirePOST
     public HttpResponse doSave(@QueryParameter String seleniumVersion) {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+
+        boolean versionChanged = !seleniumVersion.equals(this.seleniumVersion);
         setSeleniumVersion(seleniumVersion);
+
+        if (versionChanged) {
+            if (hubActive) {
+                addHubRestartLog("Restarting Selenium Hub for version update");
+                doStopHub();
+                doStartHub();
+                addHubRestartLog("Hub restarted with new version " + seleniumVersion);
+            }
+            addHubRestartLog("Restarting agents for version update");
+            restartAllActiveAgents();
+            addHubRestartLog("Agents restarted with new version " + seleniumVersion);
+        }
+
         return new HttpRedirect(".");
+    }
+
+    private void restartAllActiveAgents() {
+        for (Computer computer : Jenkins.get().getComputers()) {
+            if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
+                continue;
+            }
+
+            SeleniumAgentAction agentAction = computer.getAction(SeleniumAgentAction.class);
+            try {
+                if (agentAction != null && agentAction.getNodeActive()) {
+                    agentAction.addNodeRestartLog("Restarting agent for version update");
+                    agentAction.doStopNode();
+                    agentAction.doStartNode();
+                    agentAction.addNodeRestartLog("Agent restarted with new version " + seleniumVersion);
+                }
+            } catch (Exception e) {
+                agentAction.addNodeRestartLog("Error during agent update: " + e.getMessage());
+                addHubRestartLog("Error during agent update of " + computer.getName() + ": " + e.getMessage());
+            }
+        }
     }
 
     @Initializer(after = InitMilestone.JOB_LOADED)
@@ -115,12 +151,12 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     @Override
     public String getDisplayName() {
-        return "Selenium verwalten";
+        return Messages.SeleniumGlobalProperty_title();
     }
 
     @Override
     public String getDescription() {
-        return "Globale Selenium-Einstellungen konfigurieren";
+        return Messages.SeleniumGlobalProperty_description();
     }
 
     @Override
@@ -148,8 +184,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
     public HttpResponse doStartHub() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
-            return FormValidation.error(
-                    "Bitte wählen Sie eine Selenium-Version aus und speichern Sie die Konfiguration.");
+            return FormValidation.error(Messages.SeleniumGlobalProperty_error_select_version());
         }
 
         try {
@@ -186,8 +221,8 @@ public class SeleniumGlobalProperty extends ManagementLink {
             return new HttpRedirect(".");
 
         } catch (IOException e) {
-            addHubRestartLog("Fehler beim Starten des Hubs: " + e.getMessage());
-            return FormValidation.error("Fehler beim Starten des Selenium Hubs: " + e.getMessage());
+            addHubRestartLog("Error starting Selenium Hub: " + e.getMessage());
+            return FormValidation.error("Error starting Selenium Hub: " + e.getMessage());
         }
     }
 
@@ -195,10 +230,10 @@ public class SeleniumGlobalProperty extends ManagementLink {
     public HttpResponse doStopHub() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (hubProcess == null) {
-            return FormValidation.error("Kein Prozess vorhanden.");
+            return FormValidation.error("Cannot find Selenium Hub process.");
         }
         if (!hubProcess.isAlive()) {
-            return FormValidation.ok("Selenium Hub ist bereits gestoppt.");
+            return FormValidation.ok("Selenium Hub is not running.");
         }
         try {
             hubProcess.destroy();
@@ -210,7 +245,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
             return new HttpRedirect(".");
         } catch (InterruptedException e) {
             addHubRestartLog("Error stopping Selenium Hub: " + e.getMessage());
-            return FormValidation.error("Fehler beim Stoppen des Selenium Hubs: " + e.getMessage());
+            return FormValidation.error("Error stopping Selenium Hub: " + e.getMessage());
         }
     }
 
@@ -280,13 +315,13 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     public String getHubStatusText() {
         if (seleniumVersion == null) {
-            return "Bitte setzen Sie die Selenium Version und speichern Sie die Konfiguration.";
+            return Messages.SeleniumGlobalProperty_hub_status_selenium_version();
         } else if (!isHubReachable()) {
-            return "Hub nicht im Betrieb";
+            return Messages.SeleniumGlobalProperty_hub_status_reachable();
         } else if (!isHubReady()) {
-            return "Hub gestartet, aber keine Nodes registriert (Url: " + getHubUrl() + "/ui/)";
+            return Messages.SeleniumGlobalProperty_hub_status_ready() + " (Url: " + getHubUrl() + "/ui/)";
         } else {
-            return "Hub läuft unter " + getHubUrl() + "/ui/";
+            return Messages.SeleniumGlobalProperty_hub_status_url() + " " + getHubUrl() + "/ui/";
         }
     }
 
@@ -340,7 +375,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
             JSONObject errorStatus = new JSONObject();
             JSONObject value = new JSONObject();
             value.put("ready", false);
-            value.put("message", "Hub nicht erreichbar: " + e.getMessage());
+            value.put("message", "Hub not reachable: " + e.getMessage());
             value.put("nodes", new JSONArray());
             errorStatus.put("value", value);
             return errorStatus;

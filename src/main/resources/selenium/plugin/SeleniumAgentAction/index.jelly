@@ -4,46 +4,46 @@
          xmlns:st="jelly:stapler"
          xmlns:f="/lib/form">
 
-    <l:layout title="Selenium Einstellungen für ${it.computer.displayName}" norefresh="true">
+    <l:layout title="${%SeleniumAgentAction.jelly.title} ${it.computer.displayName}" norefresh="true">
 
         <st:include it="${it.computer}" page="sidepanel.jelly"/>
 
         <l:main-panel>
-            <h1>Selenium Einstellungen für ${it.computer.displayName}</h1>
-            <p style="font-weight: bold;">Selenium Version:</p>
+            <h1>${%SeleniumAgentAction.jelly.title} ${it.computer.displayName}</h1>
+            <p style="font-weight: bold;">${%SeleniumAgentAction.jelly.selenium.version}:</p>
             <p>${it.version}</p>
 
             <f:form method="post" name="startStopNodeForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
-                <f:entry title="Selenium Node Steuerung">
+                <f:entry title="${%SeleniumAgentAction.jelly.selenium.node.control}">
                     <j:choose>
                         <j:when test="${it.nodeActive}">
-                            <f:submit value="Stoppen"/>
+                            <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.stop}"/>
                         </j:when>
                         <j:otherwise>
-                            <f:submit value="Starten"/>
+                            <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.start}"/>
                         </j:otherwise>
                     </j:choose>
                 </f:entry>
 
-                <f:entry title="Node Status">
+                <f:entry title="${%SeleniumAgentAction.jelly.selenium.node.status}">
                     <j:choose>
                         <j:when test="${it.nodeActive}">
-                            <div style="color:green;">Active</div>
+                            <div style="color:green;">${%SeleniumAgentAction.jelly.selenium.node.status.active}</div>
                         </j:when>
                         <j:otherwise>
-                            <div style="color:red;">Inactive</div>
+                            <div style="color:red;">${%SeleniumAgentAction.jelly.selenium.node.status.inactive}</div>
                         </j:otherwise>
                     </j:choose>
                 </f:entry>
             </f:form>
-            <f:section title="Node Restart Logs">
+            <f:section title="${%SeleniumAgentAction.jelly.selenium.node.restart.logs}">
                 <f:entry>
                     <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
                         <j:forEach var="log" items="${it.nodeRestartLogs}">
                             <div style="padding: 5px 0; border-bottom: 1px solid #eee;">${log}</div>
                         </j:forEach>
                         <j:if test="${it.nodeRestartLogs.isEmpty()}">
-                            <div style="color: #666;">Keine Restart-Logs vorhanden</div>
+                            <div style="color: #666;">${%SeleniumAgentAction.jelly.selenium.node.no.restart.logs}</div>
                         </j:if>
                     </div>
                 </f:entry>
