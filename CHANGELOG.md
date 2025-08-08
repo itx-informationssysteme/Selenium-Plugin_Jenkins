@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.0.2...v1.1.0) (2025-08-08)
+
+
+### Bug Fixes
+
+* trigger version update ([ba5b443](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/ba5b443163ffb20bc1f58c72df182442e79390b7))
+
+
+### Features
+
+* add auto update ([dcd90cb](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/dcd90cbd819ef34bdbbb0b9d480886229eda5697))
+
 ## [1.0.2](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.0.1...v1.0.2) (2025-08-01)
 
 
