@@ -2,10 +2,9 @@ package selenium.plugin;
 
 import hudson.Extension;
 import hudson.model.*;
-import jenkins.model.Jenkins;
-
 import java.util.Collections;
 import java.util.List;
+import jenkins.model.Jenkins;
 
 @Extension
 public class PropertyDashboardLink extends TransientViewActionFactory {

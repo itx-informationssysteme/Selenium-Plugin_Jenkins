@@ -139,6 +139,7 @@ public class SeleniumAgentAction implements Action {
         if (computer == null || computer.isOffline()) return FormValidation.error("Computer ist offline.");
         SeleniumGlobalProperty globalProp = ManagementLink.all().get(SeleniumGlobalProperty.class);
         if (globalProp == null || !globalProp.getHubActive()) {
+            addNodeRestartLog("Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");
             return FormValidation.error(
                     "Selenium-Hub ist nicht aktiv. Bitte starten sie das Hub und versuchen Sie es erneut.");
         }
