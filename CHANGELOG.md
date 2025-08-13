@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.2...v1.1.3) (2025-08-13)
+
+
+### Bug Fixes
+
+* **hotfix:** permission fix (background task) ([078d2ff](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/078d2ff93c583ccd426cfc97cda4472c5ac57151))
+
 ## [1.1.2](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.1...v1.1.2) (2025-08-13)
 
 
