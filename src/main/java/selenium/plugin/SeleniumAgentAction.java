@@ -59,7 +59,7 @@ public class SeleniumAgentAction implements Action {
             for (Computer computer : Jenkins.get().getComputers()) {
                 SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
                 if (action != null && action.nodeProcess != null) {
-                    action.doStopNode();
+                    action.stopNode();
                 }
             }
         }));
@@ -200,6 +200,11 @@ public class SeleniumAgentAction implements Action {
 
     @RequirePOST
     public HttpResponse doStopNode() {
+        setNodeActive(false);
+        return stopNode();
+    }
+
+    public HttpResponse stopNode() {
         synchronized (this) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (nodeProcess != null) {
@@ -213,7 +218,6 @@ public class SeleniumAgentAction implements Action {
                 addNodeRestartLog("Stopped Selenium Node");
             }
         }
-        setNodeActive(false);
         return new HttpRedirect(".");
     }
 

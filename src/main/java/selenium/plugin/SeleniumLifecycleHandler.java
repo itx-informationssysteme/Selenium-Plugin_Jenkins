@@ -27,7 +27,7 @@ public class SeleniumLifecycleHandler extends RestartListener {
             SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
             try {
                 if (action != null && action.getNodeActive()) {
-                    action.doStopNode();
+                    action.stopNode();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
