@@ -136,6 +136,11 @@ public class SeleniumAgentAction implements Action {
     @RequirePOST
     public HttpResponse doStartNode() {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        return startNodeInternal();
+    }
+
+    @RequirePOST
+    public HttpResponse startNodeInternal() {
         if (computer == null || computer.isOffline()) return FormValidation.error("Computer ist offline.");
         SeleniumGlobalProperty globalProp = ManagementLink.all().get(SeleniumGlobalProperty.class);
         if (globalProp == null || !globalProp.getHubActive()) {
@@ -237,7 +242,7 @@ public class SeleniumAgentAction implements Action {
         try {
             if (nodeActive && (!getNodeActive() || nodeProcess == null)) {
                 addNodeRestartLog("Trigger automatic restart of Selenium Node (Node not reachable or stopped)");
-                doStartNode();
+                this.startNodeInternal();
             }
         } catch (IOException | InterruptedException e) {
             addNodeRestartLog("Error checking Selenium Node: " + e.getMessage());
