@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.0...v1.1.1) (2025-08-13)
+
+
+### Bug Fixes
+
+* stop nodes on restart ([d008e00](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/d008e00f7695808f12f000d92437e8162073c318))
+
 # [1.1.0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.0.2...v1.1.0) (2025-08-08)
 
 
