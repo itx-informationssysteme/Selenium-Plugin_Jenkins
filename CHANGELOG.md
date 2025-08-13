@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.1...v1.1.2) (2025-08-13)
+
+
+### Bug Fixes
+
+* **hotfix:** restart node if active ([8849a90](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/8849a90149e1416aabd0b3878efb67ed8060e2a0))
+
 ## [1.1.1](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.0...v1.1.1) (2025-08-13)
 
 
