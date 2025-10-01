@@ -81,7 +81,7 @@ jobs:
         with:
           path: target/
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
