@@ -49,7 +49,6 @@ public class InboundAgentWatcher extends ComputerListener {
         boolean allOnline = inboundComputers.stream().allMatch(Computer::isOnline);
 
         if (allOnline && started.compareAndSet(false, true)) {
-            LOGGER.info(">>> All Inbound Agents are online – start Post-Agent-Startup-Logic");
             runPostAgentStartupLogic();
         }
     }
