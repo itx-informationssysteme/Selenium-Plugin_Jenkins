@@ -11,6 +11,7 @@ import hudson.util.FormValidation;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
@@ -154,18 +155,18 @@ public class SeleniumAgentAction implements Action {
                 if (node == null) {
                     return FormValidation.error("No Node found.");
                 }
-
                 FilePath rootPath = node.getRootPath();
                 if (rootPath == null) {
                     return FormValidation.error("No RootPath found.");
                 }
-
                 tmp = rootPath.child("selenium-tmp");
             }
             if (tmp == null) {
                 return FormValidation.error("No TempPath found.");
             }
             tmp.mkdirs();
+
+            killByPidFile(tmp);
 
             String version = getVersion().replaceAll("[^0-9.]", "");
             String jarUrl = "https://github.com/SeleniumHQ/selenium/releases/download/selenium-" + version
@@ -187,13 +188,17 @@ public class SeleniumAgentAction implements Action {
                             "--selenium-manager",
                             "true",
                             "--hub",
-                            globalProp.getHubUrl())
+                            ManagementLink.all().get(SeleniumGlobalProperty.class).getHubUrl())
                     .pwd(tmp)
                     .stdout(TaskListener.NULL);
 
             setNodeProcess(ps.start());
             setNodeActive(true);
             addNodeRestartLog("Started Selenium Node");
+
+            // 3) Nach dem Start PID-Datei schreiben
+            writeNodePid(tmp, jar.getRemote());
+
             save();
         } catch (Exception e) {
             setNodeActive(false);
@@ -246,6 +251,62 @@ public class SeleniumAgentAction implements Action {
             }
         } catch (IOException | InterruptedException e) {
             addNodeRestartLog("Error checking Selenium Node: " + e.getMessage());
+        }
+    }
+
+    private FilePath getPidFile(FilePath tmp) {
+        return tmp.child("selenium-node.pid");
+    }
+
+    private String readPidFromFile(FilePath f) throws IOException, InterruptedException {
+        try (var is = f.read()) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
+        }
+    }
+
+    private void killByPidFile(FilePath tmp) {
+        try {
+            FilePath pidFile = getPidFile(tmp);
+            if (pidFile.exists()) {
+                String pid = readPidFromFile(pidFile);
+                if (!pid.isEmpty()) {
+                    boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
+                    Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
+                    if (isUnix) {
+                        launcher.launch().cmds("sh", "-c", "kill -9 " + pid + " || true").stdout(TaskListener.NULL).join();
+                    } else {
+                        launcher.launch().cmds("cmd", "/c", "taskkill /PID " + pid + " /F 2>nul || ver > nul").stdout(TaskListener.NULL).join();
+                    }
+                    addNodeRestartLog("Killed Node by PID file (PID=" + pid + ")");
+                }
+                pidFile.delete();
+            }
+        } catch (Exception e) {
+            addNodeRestartLog("killByPidFile failed: " + e.getMessage());
+        }
+    }
+
+    private void writeNodePid(FilePath tmp, String jarRemote) {
+        try {
+            boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
+            FilePath pidFile = getPidFile(tmp);
+            Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
+            if (isUnix) {
+                String escaped = jarRemote.replace("'", "'\\''");
+                String cmd = "sh -c \"pgrep -f -n '" + escaped + ".* node' > '" + pidFile.getRemote() + "' || true\"";
+                launcher.launch().cmds("sh", "-c", cmd).stdout(TaskListener.NULL).join();
+            } else {
+                String escaped = jarRemote.replace("'", "''");
+                String ps = "$p=(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match [regex]::Escape('" + escaped + "') -and $_.CommandLine -match ' node' } | Select-Object -First 1 -ExpandProperty ProcessId); if ($p) { Set-Content -Path '" + pidFile.getRemote().replace("\\", "/") + "' -Value $p }";
+                launcher.launch().cmds("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", ps).stdout(TaskListener.NULL).join();
+            }
+            if (pidFile.exists()) {
+                addNodeRestartLog("Wrote Node PID file: " + pidFile.getRemote());
+            } else {
+                addNodeRestartLog("Node PID file not created (process search may have failed)");
+            }
+        } catch (Exception e) {
+            addNodeRestartLog("writeNodePid failed: " + e.getMessage());
         }
     }
 }

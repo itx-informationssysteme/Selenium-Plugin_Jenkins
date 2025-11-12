@@ -33,10 +33,11 @@
     <revision>1.0.0-SNAPSHOT</revision>
     <changelist />
 
-    <jenkins.version>2.440.3</jenkins.version>
+    <jenkins.version>2.528</jenkins.version>
     <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
 
     <spotless.check.skip>false</spotless.check.skip>
+    <java.level>17</java.level>
   </properties>
 
   <dependencyManagement>
@@ -44,8 +45,8 @@
       <dependency>
         <!-- Pick up common dependencies for the selected LTS line: https://github.com/jenkinsci/bom#usage -->
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.440.x</artifactId>
-        <version>3193.v330d8248d39e</version>
+        <artifactId>bom-2.528.x</artifactId>
+        <version>5659.vecf9e2dc5a_ed</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -80,14 +81,40 @@
 
   <repositories>
     <repository>
-      <id>repo.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/public/</url>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>false</enabled></snapshots>
+    </repository>
+    <repository>
+      <id>jenkins-releases</id>
+      <url>https://repo.jenkins-ci.org/releases/</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>false</enabled></snapshots>
     </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
-      <id>repo.jenkins-ci.org</id>
-      <url>https://repo.jenkins-ci.org/public/</url>
+      <id>central-plugins</id>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </pluginRepository>
+    <pluginRepository>
+      <id>jenkins-plugins</id>
+      <url>https://repo.jenkins-ci.org/releases/</url>
     </pluginRepository>
   </pluginRepositories>
+  <build>
+    <plugins>
+      <!-- Explizite Version des maven-hpi-plugin damit Jakarta/Jetty12 kompatible web.xml generiert wird -->
+      <plugin>
+        <groupId>org.jenkins-ci.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <version>3.61</version>
+        <configuration>
+          <!-- Erzwingt Nutzung des richtigen Jenkins WAR als Vorlage für Listener/Filter -->
+          <webAppFile>${settings.localRepository}/org/jenkins-ci/main/jenkins-war/${jenkins.version}/jenkins-war-${jenkins.version}.war</webAppFile>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

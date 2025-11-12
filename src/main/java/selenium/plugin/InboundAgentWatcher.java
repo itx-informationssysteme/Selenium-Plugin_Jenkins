@@ -46,21 +46,21 @@ public class InboundAgentWatcher extends ComputerListener {
             return;
         }
 
-        boolean allOnline = inboundComputers.stream().allMatch(Computer::isOnline);
+        List<Computer> allOnlineComputers = inboundComputers.stream().filter(Computer::isOnline).toList();
 
-        if (allOnline && started.compareAndSet(false, true)) {
-            runPostAgentStartupLogic();
+        if (!allOnlineComputers.isEmpty()) {
+            runPostAgentStartupLogic(allOnlineComputers);
         }
     }
 
-    private void runPostAgentStartupLogic() {
-        for (Computer computer : Jenkins.get().getComputers()) {
+    private void runPostAgentStartupLogic(List<Computer> allOnlineComputers) {
+        for (Computer computer : allOnlineComputers) {
             String display = computer.getDisplayName();
             if ("Jenkins".equals(display) || "(built-in)".equals(display)) {
                 continue;
             }
             SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
-            if (action != null) {
+            if (action != null && computer.isConnected()) {
                 try {
                     action.addNodeRestartLog("Post-Agent-Startup Trigger (InboundAgentWatcher)");
                     action.checkAndRestartNodeIfNeeded();
