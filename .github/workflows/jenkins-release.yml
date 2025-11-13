@@ -35,10 +35,7 @@ jobs:
       matrix:
         java: ["17", "21"]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - uses: actions/checkout@v4
 
       - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v4
@@ -83,8 +80,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: target/
+      - uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_TMP_TOKEN_APP_ID }}
+          private-key: ${{ secrets.GH_TMP_TOKEN_PRIVAT_KEY }}
       - name: Semantic Release
         uses: cycjimmy/semantic-release-action@v4
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
