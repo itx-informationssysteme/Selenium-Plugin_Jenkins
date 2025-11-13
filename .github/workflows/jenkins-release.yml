@@ -86,7 +86,7 @@ jobs:
           app-id: ${{ vars.GH_TMP_TOKEN_APP_ID }}
           private-key: ${{ secrets.GH_TMP_TOKEN_PRIVAT_KEY }}
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v5
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
