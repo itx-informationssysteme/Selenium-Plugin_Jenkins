@@ -14,10 +14,10 @@ jobs:
       matrix:
         java: ["17", "21"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Java ${{ matrix.java }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
@@ -35,10 +35,10 @@ jobs:
       matrix:
         java: ["17", "21"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Java ${{ matrix.java }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
@@ -65,7 +65,7 @@ jobs:
         run: mv target/*.hpi target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: selenium-plugin-jenkins_java-${{ matrix.java }}-hpi
           path: target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
@@ -75,9 +75,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: target/
       - uses: actions/create-github-app-token@v2
@@ -87,7 +87,7 @@ jobs:
           private-key: ${{ secrets.GH_TMP_TOKEN_PRIVAT_KEY }}
           owner: ${{ github.repository_owner }}
       - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v5
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
