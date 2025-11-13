@@ -18,7 +18,7 @@ services:
       - JENKINS_URL=http://host.docker.internal:8080/
       - JENKINS_AGENT_NAME=docker-agent-1
       - JENKINS_AGENT_WORKDIR=/home/jenkins/agent
-      - JENKINS_SECRET=4fb78d2764c91cb6382b24f416166196d1611e3d6429e5032a19d0d31642f5b6
+      - JENKINS_SECRET=${JENKINS_SECRET:-}  # Set via environment variable, do not commit secrets to version control
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - jenkins_agent_data:/home/jenkins/agent
