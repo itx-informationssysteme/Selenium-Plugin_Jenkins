@@ -54,6 +54,9 @@ public class InboundAgentWatcher extends ComputerListener {
     }
 
     private void runPostAgentStartupLogic(List<Computer> allOnlineComputers) {
+        if(!started.compareAndSet(false, true)) {
+            return;
+        }
         for (Computer computer : allOnlineComputers) {
             String display = computer.getDisplayName();
             if ("Jenkins".equals(display) || "(built-in)".equals(display)) {

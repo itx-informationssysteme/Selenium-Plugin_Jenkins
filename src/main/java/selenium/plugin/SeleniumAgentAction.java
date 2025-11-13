@@ -15,6 +15,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import jenkins.model.Jenkins;
+import org.codehaus.groovy.util.StringUtil;
+import org.dom4j.util.StringUtils;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
@@ -196,7 +198,6 @@ public class SeleniumAgentAction implements Action {
             setNodeActive(true);
             addNodeRestartLog("Started Selenium Node");
 
-            // 3) Nach dem Start PID-Datei schreiben
             writeNodePid(tmp, jar.getRemote());
 
             save();
@@ -269,7 +270,7 @@ public class SeleniumAgentAction implements Action {
             FilePath pidFile = getPidFile(tmp);
             if (pidFile.exists()) {
                 String pid = readPidFromFile(pidFile);
-                if (!pid.isEmpty()) {
+                if (!pid.isEmpty() && pid.matches("\\d+")) {
                     boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
                     Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
                     if (isUnix) {
@@ -292,9 +293,15 @@ public class SeleniumAgentAction implements Action {
             FilePath pidFile = getPidFile(tmp);
             Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
             if (isUnix) {
-                String escaped = jarRemote.replace("'", "'\\''");
-                String cmd = "sh -c \"pgrep -f -n '" + escaped + ".* node' > '" + pidFile.getRemote() + "' || true\"";
-                launcher.launch().cmds("sh", "-c", cmd).stdout(TaskListener.NULL).join();
+                if (!jarRemote.matches("^[\\w\\-./]+$")) {
+                    throw new IllegalArgumentException("Invalid jarRemote value");
+                }
+                // Run pgrep directly, capture output, and write to pidFile
+                Proc proc = launcher.launch().cmds("pgrep", "-f", "-n", jarRemote + ".* node").readStdout().start();
+                String pid = String.valueOf(proc.joinWithTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS, TaskListener.NULL));
+                if (!pid.trim().isEmpty()) {
+                    pidFile.write(pid.trim(), StandardCharsets.UTF_8.name());
+                }
             } else {
                 String escaped = jarRemote.replace("'", "''");
                 String ps = "$p=(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match [regex]::Escape('" + escaped + "') -and $_.CommandLine -match ' node' } | Select-Object -First 1 -ExpandProperty ProcessId); if ($p) { Set-Content -Path '" + pidFile.getRemote().replace("\\", "/") + "' -Value $p }";

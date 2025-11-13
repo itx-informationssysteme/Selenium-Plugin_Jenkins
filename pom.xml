@@ -37,7 +37,6 @@
     <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
 
     <spotless.check.skip>false</spotless.check.skip>
-    <java.level>17</java.level>
   </properties>
 
   <dependencyManagement>
