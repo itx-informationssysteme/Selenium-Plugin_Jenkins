@@ -35,7 +35,10 @@ jobs:
       matrix:
         java: ["17", "21"]
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v4
