@@ -104,13 +104,13 @@
   </pluginRepositories>
   <build>
     <plugins>
-      <!-- Explizite Version des maven-hpi-plugin damit Jakarta/Jetty12 kompatible web.xml generiert wird -->
+      <!-- Explicit version of maven-hpi-plugin to generate Jakarta/Jetty12 compatible web.xml -->
       <plugin>
         <groupId>org.jenkins-ci.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
         <version>3.61</version>
         <configuration>
-          <!-- Erzwingt Nutzung des richtigen Jenkins WAR als Vorlage für Listener/Filter -->
+          <!-- Enforces use of the correct Jenkins WAR as a template for listeners/filters -->
           <webAppFile>${settings.localRepository}/org/jenkins-ci/main/jenkins-war/${jenkins.version}/jenkins-war-${jenkins.version}.war</webAppFile>
         </configuration>
       </plugin>
