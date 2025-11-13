@@ -10,8 +10,21 @@ services:
       - jenkins_home:/var/jenkins_home
       - ./selenium-plugin/target:/usr/share/jenkins/ref/plugins/
 
-  ssh-agent:
-    image: jenkins/ssh-agent
+  jenkins-agent:
+    image: jenkins/inbound-agent:latest
+    container_name: jenkins-agent
+    restart: unless-stopped
+    environment:
+      - JENKINS_URL=http://host.docker.internal:8080/
+      - JENKINS_AGENT_NAME=docker-agent-1
+      - JENKINS_AGENT_WORKDIR=/home/jenkins/agent
+      - JENKINS_SECRET=${JENKINS_SECRET:-}  # Set via environment variable, do not commit secrets to version control
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins_agent_data:/home/jenkins/agent
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   jenkins_home:
+  jenkins_agent_data:
