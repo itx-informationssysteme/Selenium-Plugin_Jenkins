@@ -1,9 +1,3 @@
-## [1.1.4](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.3...v1.1.4) (2025-11-13)
-
-### Bug Fixes
-
-* **hotfix:** fix restart task scheduling ([ac5319f](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/ac5319fd23acbe214048071e816b9b8c0e06d565))
-
 ## [1.1.3](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.2...v1.1.3) (2025-08-13)
 
 
