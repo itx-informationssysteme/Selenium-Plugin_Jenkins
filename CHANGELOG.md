@@ -1,3 +1,19 @@
+# [1.2.0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.3...v1.2.0) (2025-11-17)
+
+
+### Bug Fixes
+
+* add changelog version and description ([6ab33c9](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/6ab33c978d1b76761d4848d02cd5c7547b75afb0))
+* After Jenkins reboot, the InboundAgentWatcher class waits until all inbound agents are connected and starts the selenium node after the reconnect automatically. ([7c995bf](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/7c995bfd0f4cf5f5530e383d13a1cfa1650aff72))
+* After Jenkins reboot, the InboundAgentWatcher class waits until all inbound agents are connected and starts the selenium node after the reconnect automatically. ([4733825](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/47338251fd23f2f76b3b5561ab7c9c7c77a0a4c7))
+* updated jenkins ci plugin version to match the new jenkins version. This resolves the errors during the java builds ([7974e19](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/7974e1915fdef983658b0eced2bd137dbd47cff3))
+
+
+### Features
+
+* resolved comments from copilot and gschafra ([6492e89](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/6492e89049f2344b81f9437518f8b5ae8a2a9f16))
+* when jenkins is loosing it's connection to the Selenium node, the node process will be killed before the mster trys to start up a new node process ([c01b076](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/c01b0763038b6b15e7525150ccbe798894360660))
+
 ## [1.1.3](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.2...v1.1.3) (2025-08-13)
 
 
