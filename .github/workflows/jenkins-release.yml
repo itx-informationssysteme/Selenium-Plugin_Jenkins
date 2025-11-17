@@ -80,6 +80,13 @@ jobs:
         uses: actions/download-artifact@v6
         with:
           path: target/
+      - name: Validate private key exists
+        run: |
+          if [ -z "${{ secrets.GH_TMP_TOKEN_PRIVAT_KEY }}" ]; then
+            echo "Private key missing"
+            exit 1
+          fi
+          echo "Private key loaded (not printing)"
       - uses: actions/create-github-app-token@v2
         id: app-token
         with:
