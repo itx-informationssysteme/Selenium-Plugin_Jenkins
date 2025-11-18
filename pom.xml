@@ -16,12 +16,13 @@
 
   <name>Selenium Plugin</name>
   <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-  <licenses>
-    <license>
-      <name>MIT License</name>
-      <url>https://opensource.org/license/mit/</url>
-    </license>
-  </licenses>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
   <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false" child.scm.url.inherit.append.path="false">
     <connection>scm:git:https://github.com/${gitHubRepo}</connection>
     <developerConnection>scm:git:https://github.com/${gitHubRepo}</developerConnection>
