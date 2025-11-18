@@ -283,7 +283,7 @@ public class SeleniumAgentAction implements Action {
             FilePath pidFile = getPidFile(tmp);
             if (pidFile.exists()) {
                 String pid = readPidFromFile(pidFile);
-                if (!pid.isEmpty() && pid.matches("\\d+")) {
+                if (!pid.isEmpty() && !pid.equals("0") && pid.matches("\\d+")) {
                     boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
                     Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
                     if (isUnix) {
@@ -309,11 +309,15 @@ public class SeleniumAgentAction implements Action {
                 if (!jarRemote.matches("^[\\w\\-./]+$")) {
                     throw new IllegalArgumentException("Invalid jarRemote value");
                 }
-                // Run pgrep directly, capture output, and write to pidFile
-                Proc proc = launcher.launch().cmds("pgrep", "-f", "-n", jarRemote + ".* node").readStdout().start();
-                String pid = String.valueOf(proc.joinWithTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS, TaskListener.NULL));
-                if (!pid.trim().isEmpty()) {
-                    pidFile.write(pid.trim(), StandardCharsets.UTF_8.name());
+                // `pgrep` benutzen und stdout korrekt auslesen (macOS liefert sonst nur Exit-Code)
+                var out = new java.io.ByteArrayOutputStream();
+                launcher.launch()
+                        .cmds("pgrep", "-f", "-n", jarRemote)
+                        .stdout(out)
+                        .join();
+                String pid = out.toString(StandardCharsets.UTF_8).trim();
+                if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
+                    pidFile.write(pid, StandardCharsets.UTF_8.name());
                 }
             } else {
                 String escaped = jarRemote.replace("'", "''");
