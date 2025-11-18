@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.2.0...v1.3.0) (2025-11-18)
+
+
+### Bug Fixes
+
+* fixed typo ([8efaca0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/8efaca0e8ef3f4b1320340603eb0c00970572794))
+
+
+### Features
+
+* Added License information of apache 2.0 license ([0dfc136](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/0dfc136ade75b5bcf6ed5561c565fd3cb4306f69))
+
 # [1.2.0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.1.3...v1.2.0) (2025-11-17)
 
 
