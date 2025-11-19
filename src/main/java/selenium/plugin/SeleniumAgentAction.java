@@ -312,7 +312,7 @@ public class SeleniumAgentAction implements Action {
                 // `pgrep` benutzen und stdout korrekt auslesen (macOS liefert sonst nur Exit-Code)
                 var out = new java.io.ByteArrayOutputStream();
                 launcher.launch()
-                        .cmds("pgrep", "-f", "-n", jarRemote)
+                        .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
                         .stdout(out)
                         .join();
                 String pid = out.toString(StandardCharsets.UTF_8).trim();
