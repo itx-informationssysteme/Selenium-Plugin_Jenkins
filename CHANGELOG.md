@@ -1,3 +1,14 @@
+## [1.3.1](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.0...v1.3.1) (2025-11-19)
+
+
+### Bug Fixes
+
+* **bugfix:** the bug should now be resolved. The used method just readed the exit code instead of the PID, which is always 1 or 0. ([4f24328](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/4f243285d8546e30eecbb35e7c5174bf190162d6))
+* Changed Microseconds to Milliseconds ([e6fe13a](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/e6fe13a42acde1aa649e4ac43f4be380547e3bc8))
+* Resolved change proposed by copilot. ([3801a68](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/3801a68463768f55a638eee8dcd012f29d1338f6))
+* Resolved change proposed by copilot. ([18306a7](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/18306a7073d04b970082391f4c47d9f1f8747adb))
+* Resolved change proposed by copilot. ([28f7593](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/28f7593eaf7ba9e183ad47b7acedc33f0f4e7b7b))
+
 # [1.3.0](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.2.0...v1.3.0) (2025-11-18)
 
 
