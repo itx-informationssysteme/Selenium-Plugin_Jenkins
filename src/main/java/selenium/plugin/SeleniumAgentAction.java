@@ -309,7 +309,7 @@ public class SeleniumAgentAction implements Action {
                 if (!jarRemote.matches("^[\\w\\-./]+$")) {
                     throw new IllegalArgumentException("Invalid jarRemote value");
                 }
-                // `pgrep` benutzen und stdout korrekt auslesen (macOS liefert sonst nur Exit-Code)
+                // Use `pgrep` and correctly read stdout (macOS otherwise only returns exit code)
                 ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
                 int exitCode = launcher.launch()
                         .cmds("pgrep", "-f", "-n", jarRemote)
