@@ -310,7 +310,7 @@ public class SeleniumAgentAction implements Action {
                     throw new IllegalArgumentException("Invalid jarRemote value");
                 }
                 // `pgrep` benutzen und stdout korrekt auslesen (macOS liefert sonst nur Exit-Code)
-                var out = new java.io.ByteArrayOutputStream();
+                ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
                 int exitCode = launcher.launch()
                         .cmds("pgrep", "-f", "-n", jarRemote)
                         .stdout(out)
