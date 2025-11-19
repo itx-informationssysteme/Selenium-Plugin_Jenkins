@@ -31,6 +31,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
@@ -312,15 +314,17 @@ public class SeleniumAgentAction implements Action {
                     throw new IllegalArgumentException("Invalid jarRemote value");
                 }
                 // Use `pgrep` and correctly read stdout (macOS otherwise only returns exit code)
-                ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
                 int exitCode = launcher.launch()
-                        .cmds("pgrep", "-f", "-n", jarRemote)
+                        .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
                         .stdout(out)
-                        .join();
+                        .start().joinWithTimeout(5000, TimeUnit.MICROSECONDS, TaskListener.NULL);
                 if (exitCode == 0) {
                     String pid = out.toString(StandardCharsets.UTF_8).trim();
                     if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
                         pidFile.write(pid, StandardCharsets.UTF_8.name());
+                    } else if (pid.isEmpty()) {
+                        addNodeRestartLog("pgrep succeeded (exit code 0) but output was empty or only whitespace for jarRemote: " + jarRemote);
                     }
                 } else {
                     addNodeRestartLog("No process found for jarRemote: " + jarRemote + " (pgrep exit code: " + exitCode + ")");
