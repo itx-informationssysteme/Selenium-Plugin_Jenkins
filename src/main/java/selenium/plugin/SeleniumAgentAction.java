@@ -23,12 +23,16 @@ import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.*;
 import hudson.util.FormValidation;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
@@ -283,7 +287,7 @@ public class SeleniumAgentAction implements Action {
             FilePath pidFile = getPidFile(tmp);
             if (pidFile.exists()) {
                 String pid = readPidFromFile(pidFile);
-                if (!pid.isEmpty() && pid.matches("\\d+")) {
+                if (!pid.isEmpty() && !pid.equals("0") && !pid.equals("1") && pid.matches("\\d+")) {
                     boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
                     Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
                     if (isUnix) {
@@ -309,11 +313,21 @@ public class SeleniumAgentAction implements Action {
                 if (!jarRemote.matches("^[\\w\\-./]+$")) {
                     throw new IllegalArgumentException("Invalid jarRemote value");
                 }
-                // Run pgrep directly, capture output, and write to pidFile
-                Proc proc = launcher.launch().cmds("pgrep", "-f", "-n", jarRemote + ".* node").readStdout().start();
-                String pid = String.valueOf(proc.joinWithTimeout(5000, java.util.concurrent.TimeUnit.MILLISECONDS, TaskListener.NULL));
-                if (!pid.trim().isEmpty()) {
-                    pidFile.write(pid.trim(), StandardCharsets.UTF_8.name());
+                // Use `pgrep` and correctly read stdout (macOS otherwise only returns exit code)
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                int exitCode = launcher.launch()
+                        .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
+                        .stdout(out)
+                        .start().joinWithTimeout(5000, TimeUnit.MILLISECONDS, TaskListener.NULL);
+                if (exitCode == 0) {
+                    String pid = out.toString(StandardCharsets.UTF_8).trim();
+                    if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
+                        pidFile.write(pid, StandardCharsets.UTF_8.name());
+                    } else if (pid.isEmpty()) {
+                        addNodeRestartLog("pgrep succeeded (exit code 0) but output was empty or only whitespace for jarRemote: " + jarRemote);
+                    }
+                } else {
+                    addNodeRestartLog("No process found for jarRemote: " + jarRemote + " (pgrep exit code: " + exitCode + ")");
                 }
             } else {
                 String escaped = jarRemote.replace("'", "''");
