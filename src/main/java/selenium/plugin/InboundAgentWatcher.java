@@ -59,7 +59,7 @@ public class InboundAgentWatcher extends ComputerListener {
 
         List<Computer> allOnlineAndIdleComputers = inboundComputers.stream()
                 .filter(Computer::isOnline)
-                .filter(Computer::isIdle) //Only consider idle agents
+                .filter(Computer::isIdle) // Only consider idle agents
                 .toList();
 
         if (!allOnlineAndIdleComputers.isEmpty()) {
