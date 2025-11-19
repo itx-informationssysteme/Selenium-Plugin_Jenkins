@@ -283,7 +283,7 @@ public class SeleniumAgentAction implements Action {
             FilePath pidFile = getPidFile(tmp);
             if (pidFile.exists()) {
                 String pid = readPidFromFile(pidFile);
-                if (!pid.isEmpty() && !pid.equals("0") && pid.matches("\\d+")) {
+                if (!pid.isEmpty() && !pid.equals("0") && !pid.equals("1") && pid.matches("\\d+")) {
                     boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
                     Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
                     if (isUnix) {
