@@ -311,13 +311,17 @@ public class SeleniumAgentAction implements Action {
                 }
                 // `pgrep` benutzen und stdout korrekt auslesen (macOS liefert sonst nur Exit-Code)
                 var out = new java.io.ByteArrayOutputStream();
-                launcher.launch()
-                        .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
+                int exitCode = launcher.launch()
+                        .cmds("pgrep", "-f", "-n", jarRemote)
                         .stdout(out)
                         .join();
-                String pid = out.toString(StandardCharsets.UTF_8).trim();
-                if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
-                    pidFile.write(pid, StandardCharsets.UTF_8.name());
+                if (exitCode == 0) {
+                    String pid = out.toString(StandardCharsets.UTF_8).trim();
+                    if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
+                        pidFile.write(pid, StandardCharsets.UTF_8.name());
+                    }
+                } else {
+                    addNodeRestartLog("No process found for jarRemote: " + jarRemote + " (pgrep exit code: " + exitCode + ")");
                 }
             } else {
                 String escaped = jarRemote.replace("'", "''");
