@@ -23,6 +23,8 @@ import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.*;
 import hudson.util.FormValidation;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
