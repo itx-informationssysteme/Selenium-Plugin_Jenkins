@@ -318,7 +318,7 @@ public class SeleniumAgentAction implements Action {
                 int exitCode = launcher.launch()
                         .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
                         .stdout(out)
-                        .start().joinWithTimeout(5000, TimeUnit.MICROSECONDS, TaskListener.NULL);
+                        .start().joinWithTimeout(5000, TimeUnit.MILLISECONDS, TaskListener.NULL);
                 if (exitCode == 0) {
                     String pid = out.toString(StandardCharsets.UTF_8).trim();
                     if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
