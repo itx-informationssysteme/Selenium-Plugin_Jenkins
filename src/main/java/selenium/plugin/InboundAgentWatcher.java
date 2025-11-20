@@ -20,12 +20,11 @@ import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerListener;
-import jenkins.model.Jenkins;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import jenkins.model.Jenkins;
 
 @Extension
 public class InboundAgentWatcher extends ComputerListener {
@@ -56,7 +55,6 @@ public class InboundAgentWatcher extends ComputerListener {
             return;
         }
 
-
         List<Computer> allOnlineAndIdleComputers = inboundComputers.stream()
                 .filter(Computer::isOnline)
                 .filter(Computer::isIdle) // Only consider idle agents
@@ -74,7 +72,7 @@ public class InboundAgentWatcher extends ComputerListener {
                 continue;
             }
             SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
-            if (action != null && computer.isConnected()) {
+            if (action != null && computer.isConnecting()) {
                 try {
                     action.addNodeRestartLog("Post-Agent-Startup Trigger (InboundAgentWatcher)");
                     action.checkAndRestartNodeIfNeeded();

@@ -2,21 +2,11 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
     <l:layout title="${%SeleniumGlobalProperty.jelly.title}">
         <l:main-panel>
+            <j:set var="instance" value="${it}"/>
+            <j:set var="descriptor" value="${it.descriptor}"/>
             <f:form method="post" name="config" action="save">
                 <f:entry title="${%SeleniumGlobalProperty.jelly.version}">
-                    <select name="seleniumVersion" style="width: 200px;">
-                        <option value="">-- ${%SeleniumGlobalProperty.jelly.please.select} --</option>
-                        <j:forEach var="v" items="${it.doFillSeleniumVersionItems()}">
-                            <j:choose>
-                                <j:when test="${it.seleniumVersion != null and it.seleniumVersion.equals(v.value)}">
-                                    <option value="${v.value}" selected="selected">${v.name}</option>
-                                </j:when>
-                                <j:otherwise>
-                                    <option value="${v.value}">${v.name}</option>
-                                </j:otherwise>
-                            </j:choose>
-                        </j:forEach>
-                    </select>
+                    <f:select field="seleniumVersion" descriptor="${descriptor}" />
                 </f:entry>
 
                 <f:bottomButtonBar>
@@ -157,12 +147,14 @@
                                 </table>
 
                                 <div style="margin-top:10px;">
-                                    <a href="javascript:void(0)"
-                                       onclick="toggleSlots('slots-${loop.index}')"
+                                    <a href="#"
+                                       class="selenium-toggle-slots-link"
+                                       data-slots-id="slots-${loop.index}"
+                                       data-toggle-id="slots-toggle-${loop.index}"
                                        style="text-decoration:none; color:#333; font-weight:bold;">
                                         <span id="slots-toggle-${loop.index}">▼</span> ${%SeleniumGlobalProperty.jelly.slots.show} (${node.slots.size()})
                                     </a>
-                                    <div id="slots-${loop.index}" style="display:none; margin-top:10px;">
+                                    <div id="slots-${loop.index}" class="selenium-slots" style="display:none; margin-top:10px;">
                                         <table class="pane" style="width:100%;">
                                             <thead>
                                                 <tr>
@@ -215,19 +207,6 @@
                 </f:entry>
             </f:section>
 
-            <script>
-                function toggleSlots(id) {
-                var element = document.getElementById(id);
-                var toggle = document.getElementById(id.replace('slots-', 'slots-toggle-'));
-                if (element.style.display === "none") {
-                element.style.display = "block";
-                toggle.textContent = "▲";
-                } else {
-                element.style.display = "none";
-                toggle.textContent = "▼";
-                }
-                }
-            </script>
 
         </l:main-panel>
     </l:layout>

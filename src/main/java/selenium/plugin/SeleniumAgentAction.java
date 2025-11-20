@@ -23,7 +23,6 @@ import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.*;
 import hudson.util.FormValidation;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -31,8 +30,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
@@ -155,7 +154,7 @@ public class SeleniumAgentAction implements Action {
 
     @RequirePOST
     public HttpResponse doStartNode() {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
         return startNodeInternal();
     }
 
@@ -207,7 +206,8 @@ public class SeleniumAgentAction implements Action {
                             "--selenium-manager",
                             "true",
                             "--hub",
-                            ManagementLink.all().get(SeleniumGlobalProperty.class).getHubUrl())
+                            Objects.requireNonNull(ManagementLink.all().get(SeleniumGlobalProperty.class))
+                                    .getHubUrl())
                     .pwd(tmp)
                     .stdout(TaskListener.NULL);
 
@@ -234,7 +234,7 @@ public class SeleniumAgentAction implements Action {
 
     public HttpResponse stopNode() {
         synchronized (this) {
-            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            Jenkins.get().checkPermission(Jenkins.MANAGE);
             if (nodeProcess != null) {
                 try {
                     nodeProcess.kill();
@@ -291,9 +291,15 @@ public class SeleniumAgentAction implements Action {
                     boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
                     Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
                     if (isUnix) {
-                        launcher.launch().cmds("sh", "-c", "kill -9 " + pid + " || true").stdout(TaskListener.NULL).join();
+                        launcher.launch()
+                                .cmds("sh", "-c", "kill -9 " + pid + " || true")
+                                .stdout(TaskListener.NULL)
+                                .join();
                     } else {
-                        launcher.launch().cmds("cmd", "/c", "taskkill /PID " + pid + " /F 2>nul || ver > nul").stdout(TaskListener.NULL).join();
+                        launcher.launch()
+                                .cmds("cmd", "/c", "taskkill /PID " + pid + " /F 2>nul || ver > nul")
+                                .stdout(TaskListener.NULL)
+                                .join();
                     }
                     addNodeRestartLog("Killed Node by PID file (PID=" + pid + ")");
                 }
@@ -304,43 +310,49 @@ public class SeleniumAgentAction implements Action {
         }
     }
 
-    private void writeNodePid(FilePath tmp, String jarRemote) {
-        try {
-            boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
-            FilePath pidFile = getPidFile(tmp);
-            Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
-            if (isUnix) {
-                if (!jarRemote.matches("^[\\w\\-./]+$")) {
-                    throw new IllegalArgumentException("Invalid jarRemote value");
-                }
-                // Use `pgrep` and correctly read stdout (macOS otherwise only returns exit code)
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                int exitCode = launcher.launch()
-                        .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
-                        .stdout(out)
-                        .start().joinWithTimeout(5000, TimeUnit.MILLISECONDS, TaskListener.NULL);
-                if (exitCode == 0) {
-                    String pid = out.toString(StandardCharsets.UTF_8).trim();
-                    if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
-                        pidFile.write(pid, StandardCharsets.UTF_8.name());
-                    } else if (pid.isEmpty()) {
-                        addNodeRestartLog("pgrep succeeded (exit code 0) but output was empty or only whitespace for jarRemote: " + jarRemote);
-                    }
-                } else {
-                    addNodeRestartLog("No process found for jarRemote: " + jarRemote + " (pgrep exit code: " + exitCode + ")");
+    private void writeNodePid(FilePath tmp, String jarRemote) throws IOException, InterruptedException {
+        boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
+        FilePath pidFile = getPidFile(tmp);
+        Launcher launcher = new Launcher.RemoteLauncher(TaskListener.NULL, computer.getChannel(), isUnix);
+        if (isUnix) {
+            if (!jarRemote.matches("^[\\w\\-./]+$")) {
+                throw new IllegalArgumentException("Invalid jarRemote value");
+            }
+            // Use `pgrep` and correctly read stdout (macOS otherwise only returns exit code)
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            int exitCode = launcher.launch()
+                    .cmds("pgrep", "-f", "-n", jarRemote + ".* node")
+                    .stdout(out)
+                    .start()
+                    .joinWithTimeout(5000, TimeUnit.MILLISECONDS, TaskListener.NULL);
+            if (exitCode == 0) {
+                String pid = out.toString(StandardCharsets.UTF_8).trim();
+                if (pid.matches("\\d+") && !(pid.equals("0") || pid.equals("1"))) {
+                    pidFile.write(pid, StandardCharsets.UTF_8.name());
+                } else if (pid.isEmpty()) {
+                    addNodeRestartLog(
+                            "pgrep succeeded (exit code 0) but output was empty or only whitespace for jarRemote: "
+                                    + jarRemote);
                 }
             } else {
-                String escaped = jarRemote.replace("'", "''");
-                String ps = "$p=(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match [regex]::Escape('" + escaped + "') -and $_.CommandLine -match ' node' } | Select-Object -First 1 -ExpandProperty ProcessId); if ($p) { Set-Content -Path '" + pidFile.getRemote().replace("\\", "/") + "' -Value $p }";
-                launcher.launch().cmds("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", ps).stdout(TaskListener.NULL).join();
+                addNodeRestartLog(
+                        "No process found for jarRemote: " + jarRemote + " (pgrep exit code: " + exitCode + ")");
             }
-            if (pidFile.exists()) {
-                addNodeRestartLog("Wrote Node PID file: " + pidFile.getRemote());
-            } else {
-                addNodeRestartLog("Node PID file not created (process search may have failed)");
-            }
-        } catch (Exception e) {
-            addNodeRestartLog("writeNodePid failed: " + e.getMessage());
+        } else {
+            String escaped = jarRemote.replace("'", "''");
+            String ps = "$p=(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match [regex]::Escape('"
+                    + escaped
+                    + "') -and $_.CommandLine -match ' node' } | Select-Object -First 1 -ExpandProperty ProcessId); if ($p) { Set-Content -Path '"
+                    + pidFile.getRemote().replace("\\", "/") + "' -Value $p }";
+            launcher.launch()
+                    .cmds("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", ps)
+                    .stdout(TaskListener.NULL)
+                    .join();
+        }
+        if (pidFile.exists()) {
+            addNodeRestartLog("Wrote Node PID file: " + pidFile.getRemote());
+        } else {
+            addNodeRestartLog("Node PID file not created (process search may have failed)");
         }
     }
 }
