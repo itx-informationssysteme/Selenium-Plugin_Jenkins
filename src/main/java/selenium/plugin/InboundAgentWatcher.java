@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 
 @Extension
@@ -49,7 +50,7 @@ public class InboundAgentWatcher extends ComputerListener {
         List<Computer> inboundComputers = j.getNodes().stream()
                 .map(Node::toComputer)
                 .filter(Objects::nonNull)
-                .toList();
+                .collect(Collectors.toList());
 
         if (inboundComputers.isEmpty()) {
             return;
@@ -58,7 +59,7 @@ public class InboundAgentWatcher extends ComputerListener {
         List<Computer> allOnlineAndIdleComputers = inboundComputers.stream()
                 .filter(Computer::isOnline)
                 .filter(Computer::isIdle) // Only consider idle agents
-                .toList();
+                .collect(Collectors.toList());
 
         if (!allOnlineAndIdleComputers.isEmpty()) {
             runPostAgentStartupLogic(allOnlineAndIdleComputers);
