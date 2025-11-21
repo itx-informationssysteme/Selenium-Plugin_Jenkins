@@ -185,7 +185,12 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-plugin/48x48/selenium.png";
+        return null;
+    }
+
+    @Override
+    public String getIconClassName() {
+        return "symbol-selenium-icon-solid plugin-oss-symbols-api";
     }
 
     @RequirePOST
@@ -356,6 +361,44 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
             addHubRestartLog("Trigger automatic restart of Selenium Hub (Hub not reachable or stopped)");
             doStartHub();
         }
+    }
+
+    @RequirePOST
+    public HttpResponse doEnableSeleniumNode(@QueryParameter String agentName) {
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
+        try {
+            Computer computer = Jenkins.get().getComputer(agentName);
+            if (computer == null) {
+                return FormValidation.error("Agent not found: " + agentName);
+            }
+            SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
+            if (action == null) {
+                return FormValidation.error("Selenium Agent Action not found for: " + agentName);
+            }
+            action.doStartNode();
+        } catch (Exception e) {
+            return FormValidation.error("Error enabling Selenium Node: " + e.getMessage());
+        }
+        return new HttpRedirect(".");
+    }
+
+    @RequirePOST
+    public HttpResponse doDisableSeleniumNode(@QueryParameter String agentName) {
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
+        try {
+            Computer computer = Jenkins.get().getComputer(agentName);
+            if (computer == null) {
+                return FormValidation.error("Agent not found: " + agentName);
+            }
+            SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
+            if (action == null) {
+                return FormValidation.error("Selenium Agent Action not found for: " + agentName);
+            }
+            action.doStopNode();
+        } catch (Exception e) {
+            return FormValidation.error("Error disabling Selenium Node: " + e.getMessage());
+        }
+        return new HttpRedirect(".");
     }
 
     private XmlFile getConfigFile() {

@@ -104,7 +104,12 @@ public class SeleniumAgentAction implements Action {
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-plugin/48x48/selenium.png";
+        return null;
+    }
+
+    @Override
+    public String getIconClassName() {
+        return "symbol-selenium-icon-solid plugin-oss-symbols-api";
     }
 
     @Override
