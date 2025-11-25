@@ -31,20 +31,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 @Extension
 public class SeleniumGlobalProperty extends ManagementLink implements Describable<SeleniumGlobalProperty> {
@@ -185,7 +184,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-plugin/48x48/selenium.png";
+        return "/plugin/selenium-hub/48x48/selenium.svg";
     }
 
     @RequirePOST
@@ -376,6 +375,29 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
     public Descriptor<SeleniumGlobalProperty> getDescriptor() {
         return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
     }
+
+    @POST
+    public HttpResponse doStartSeleniumNode(@QueryParameter String agentName) {
+
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
+
+        Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class).doStartNode();
+
+        return new HttpRedirect(".");
+
+    }
+
+    @POST
+    public HttpResponse doStopSeleniumNode(@QueryParameter String agentName) {
+
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
+
+        Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class).doStopNode();
+
+        return new HttpRedirect(".");
+
+    }
+
 
     @Extension
     public static class DescriptorImpl extends Descriptor<SeleniumGlobalProperty> {

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
+import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
@@ -104,7 +105,7 @@ public class SeleniumAgentAction implements Action {
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-plugin/48x48/selenium.png";
+        return "/plugin/selenium-hub/48x48/selenium.svg";
     }
 
     @Override

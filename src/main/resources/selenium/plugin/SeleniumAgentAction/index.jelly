@@ -28,14 +28,15 @@
                 <f:entry title="${%SeleniumAgentAction.jelly.selenium.node.status}">
                     <j:choose>
                         <j:when test="${it.nodeActive}">
-                            <div style="color:green;">${%SeleniumAgentAction.jelly.selenium.node.status.active}</div>
+                            <div class="jenkins-!-color-dark-green">${%SeleniumAgentAction.jelly.selenium.node.status.active}</div>
                         </j:when>
                         <j:otherwise>
-                            <div style="color:red;">${%SeleniumAgentAction.jelly.selenium.node.status.inactive}</div>
+                            <div class="jenkins-!-color-dark-red">${%SeleniumAgentAction.jelly.selenium.node.status.inactive}</div>
                         </j:otherwise>
                     </j:choose>
                 </f:entry>
             </f:form>
+
             <f:section title="${%SeleniumAgentAction.jelly.selenium.node.restart.logs}">
                 <f:entry>
                     <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">

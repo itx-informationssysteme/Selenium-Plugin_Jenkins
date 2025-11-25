@@ -72,7 +72,7 @@ public class InboundAgentWatcher extends ComputerListener {
                 continue;
             }
             SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
-            if (action != null && computer.isConnecting()) {
+            if (action != null && Objects.requireNonNull(computer.getNode()).isAcceptingTasks()) {
                 try {
                     action.addNodeRestartLog("Post-Agent-Startup Trigger (InboundAgentWatcher)");
                     action.checkAndRestartNodeIfNeeded();
