@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.2...v1.3.3) (2025-11-25)
+
+
+### Bug Fixes
+
+* updated according copilot review ([7cb02c8](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/7cb02c8bdd3d5d25a8af3103e54727c0762fcb41))
+
 ## [1.3.2](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.1...v1.3.2) (2025-11-25)
 
 
