@@ -1,3 +1,12 @@
+## [1.3.2](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.1...v1.3.2) (2025-11-25)
+
+
+### Bug Fixes
+
+* implemented feedback from jenkins community review and the certbot ([1715466](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/1715466716d0cfe0e25362bc59ecc1ccc4f9ee60))
+* **release:** performed the first changes requested by the jenkins bot and the reviewer ([61c9504](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/61c9504def6fabdd5a55952ccaf7506457c2d379))
+* updated according copilot review and UI fixes and improvements ([cc1da64](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/cc1da64440a2f8b834ba00de337db3ae2496089c))
+
 ## [1.3.1](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.0...v1.3.1) (2025-11-19)
 
 
