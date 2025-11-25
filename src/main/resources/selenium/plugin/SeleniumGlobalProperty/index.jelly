@@ -270,19 +270,6 @@
 
         </l:main-panel>
 
-        <script type="text/javascript">
-
-            function toggleSlots(id) {
-                var element = document.getElementById(id);
-                var toggle = document.getElementById(id.replace('slots-', 'slots-toggle-'));
-                if (element.style.display === "none") {
-                    element.style.display = "block";
-                    toggle.textContent = "▲";
-                } else {
-                    element.style.display = "none";
-                    toggle.textContent = "▼";
-                }
-            }
-        </script>
+        <script type="text/javascript" src="${rootURL}/plugin/selenium-hub/selenium-global.js"></script>
     </l:layout>
 </j:jelly>
