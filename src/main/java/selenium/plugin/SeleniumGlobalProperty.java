@@ -20,6 +20,8 @@ import hudson.XmlFile;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
 import hudson.model.Computer;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
 import hudson.model.ManagementLink;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -33,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
@@ -43,12 +46,11 @@ import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 @Extension
-public class SeleniumGlobalProperty extends ManagementLink {
+public class SeleniumGlobalProperty extends ManagementLink implements Describable<SeleniumGlobalProperty> {
 
-    private transient volatile List<String[]> cachedVersions;
-    private transient volatile long lastFetchTime;
     private transient Process hubProcess;
     private transient List<String> hubRestartLogs = new ArrayList<>();
     private transient long lastHubCheckTime;
@@ -56,7 +58,11 @@ public class SeleniumGlobalProperty extends ManagementLink {
     private String seleniumVersion;
     private boolean hubActive;
 
-    // Getter für die Version
+    @Override
+    public Category getCategory() {
+        return Category.TOOLS;
+    }
+
     public String getSeleniumVersion() {
         return seleniumVersion;
     }
@@ -104,7 +110,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     @RequirePOST
     public HttpResponse doSave(@QueryParameter String seleniumVersion) {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
 
         boolean versionChanged = !seleniumVersion.equals(this.seleniumVersion);
         setSeleniumVersion(seleniumVersion);
@@ -181,23 +187,12 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-plugin/48x48/selenium.png";
-    }
-
-    @RequirePOST
-    public ListBoxModel doFillSeleniumVersionItems() {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-        ListBoxModel items = new ListBoxModel();
-        List<String[]> versions = fetchSeleniumVersions();
-        for (String[] version : versions) {
-            items.add(version[0], version[1]);
-        }
-        return items;
+        return "/plugin/selenium-hub/48x48/selenium.svg";
     }
 
     @RequirePOST
     public HttpResponse doStartHub() {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
         if (this.seleniumVersion == null || this.seleniumVersion.isEmpty()) {
             return FormValidation.error(Messages.SeleniumGlobalProperty_error_select_version());
         }
@@ -243,7 +238,7 @@ public class SeleniumGlobalProperty extends ManagementLink {
 
     @RequirePOST
     public HttpResponse doStopHub() {
-        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
         if (hubProcess == null) {
             return FormValidation.error("Cannot find Selenium Hub process.");
         }
@@ -262,45 +257,6 @@ public class SeleniumGlobalProperty extends ManagementLink {
             addHubRestartLog("Error stopping Selenium Hub: " + e.getMessage());
             return FormValidation.error("Error stopping Selenium Hub: " + e.getMessage());
         }
-    }
-
-    private List<String[]> fetchSeleniumVersions() {
-        try {
-            return tryFetchFromApi();
-        } catch (IOException e) {
-            return getCachedOrDefaultVersions();
-        }
-    }
-
-    private List<String[]> tryFetchFromApi() throws IOException {
-        if (cachedVersions != null && System.currentTimeMillis() - lastFetchTime < 86400000) {
-            return cachedVersions;
-        }
-
-        String apiUrl = "https://api.github.com/repos/SeleniumHQ/selenium/tags";
-        String json = IOUtils.toString(new URL(apiUrl), StandardCharsets.UTF_8);
-        JSONArray tags = JSONArray.fromObject(json);
-
-        List<String[]> versions = tags.stream()
-                .map(obj -> ((JSONObject) obj).getString("name"))
-                .filter(version -> version.matches("^selenium-\\d+\\.\\d+\\.\\d+$"))
-                .limit(15)
-                .sorted(Comparator.reverseOrder())
-                .map(version -> new String[] {version, version.replace("selenium-", "")})
-                .collect(Collectors.toList());
-
-        cachedVersions = versions;
-        lastFetchTime = System.currentTimeMillis();
-        return versions;
-    }
-
-    private List<String[]> getCachedOrDefaultVersions() {
-        if (cachedVersions != null) return cachedVersions;
-        return Arrays.asList(
-                new String[] {"selenium-4.33.0-default", "4.33.0"},
-                new String[] {"selenium-4.32.0-default", "4.32.0"},
-                new String[] {"selenium-4.31.0-default", "4.31.0"},
-                new String[] {"selenium-4.30.0-default", "4.30.0"});
     }
 
     public boolean isHubReachable() {
@@ -415,6 +371,108 @@ public class SeleniumGlobalProperty extends ManagementLink {
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load Selenium config", e);
+        }
+    }
+
+    @Override
+    public Descriptor<SeleniumGlobalProperty> getDescriptor() {
+        return Jenkins.get().getDescriptorByType(DescriptorImpl.class);
+    }
+
+    @POST
+    public HttpResponse doStartSeleniumNode(@QueryParameter String agentName) {
+
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
+
+        SeleniumAgentAction action = Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
+
+        if(action == null) {
+            return FormValidation.error("Selenium action not found for agent: " + agentName);
+        }
+
+        action.doStartNode();
+
+        return new HttpRedirect(".");
+
+    }
+
+    @POST
+    public HttpResponse doStopSeleniumNode(@QueryParameter String agentName) {
+
+        Jenkins.get().checkPermission(Jenkins.MANAGE);
+
+        SeleniumAgentAction action = Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
+
+        if(action == null) {
+            return FormValidation.error("Selenium action not found for agent: " + agentName);
+        }
+
+        action.doStopNode();
+
+        return new HttpRedirect(".");
+
+    }
+
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<SeleniumGlobalProperty> {
+
+        private transient volatile List<String[]> cachedVersions;
+        private transient volatile long lastFetchTime;
+
+        @Override
+        public String getDisplayName() {
+            return "Selenium Global Property Descriptor";
+        }
+
+        @RequirePOST
+        public synchronized ListBoxModel doFillSeleniumVersionItems() {
+            Jenkins.get().checkPermission(Jenkins.MANAGE);
+            ListBoxModel items = new ListBoxModel();
+            List<String[]> versions = fetchSeleniumVersions();
+            for (String[] version : versions) {
+                items.add(version[0], version[1]);
+            }
+            return items;
+        }
+
+        private List<String[]> fetchSeleniumVersions() {
+            try {
+                return tryFetchFromApi();
+            } catch (IOException e) {
+                return getCachedOrDefaultVersions();
+            }
+        }
+
+        private List<String[]> tryFetchFromApi() throws IOException {
+            if (cachedVersions != null && System.currentTimeMillis() - lastFetchTime < 86400000) {
+                return cachedVersions;
+            }
+
+            String apiUrl = "https://api.github.com/repos/SeleniumHQ/selenium/tags";
+            String json = IOUtils.toString(new URL(apiUrl), StandardCharsets.UTF_8);
+            JSONArray tags = JSONArray.fromObject(json);
+
+            List<String[]> versions = tags.stream()
+                    .map(obj -> ((JSONObject) obj).getString("name"))
+                    .filter(version -> version.matches("^selenium-\\d+\\.\\d+\\.\\d+$"))
+                    .limit(15)
+                    .sorted(Comparator.reverseOrder())
+                    .map(version -> new String[] {version, version.replace("selenium-", "")})
+                    .collect(Collectors.toList());
+
+            cachedVersions = versions;
+            lastFetchTime = System.currentTimeMillis();
+            return versions;
+        }
+
+        private List<String[]> getCachedOrDefaultVersions() {
+            if (cachedVersions != null) return cachedVersions;
+            return Arrays.asList(
+                    new String[] {"selenium-4.33.0-default", "4.33.0"},
+                    new String[] {"selenium-4.32.0-default", "4.32.0"},
+                    new String[] {"selenium-4.31.0-default", "4.31.0"},
+                    new String[] {"selenium-4.30.0-default", "4.30.0"});
         }
     }
 }

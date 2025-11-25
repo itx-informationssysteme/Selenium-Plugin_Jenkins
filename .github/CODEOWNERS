@@ -1,1 +1,2 @@
-* @jenkinsci/Selenium-Plugin_Jenkins-plugin-developers
+# Code owners for the Selenium Hub Jenkins plugin
+* @jenkinsci/selenium-hub-plugin-developers @mklaiber @gschafra
