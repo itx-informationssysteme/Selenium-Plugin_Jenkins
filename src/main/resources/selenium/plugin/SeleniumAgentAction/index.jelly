@@ -10,42 +10,57 @@
 
         <l:main-panel>
             <h1>${%SeleniumAgentAction.jelly.title} ${it.computer.displayName}</h1>
-            <p style="font-weight: bold;">${%SeleniumAgentAction.jelly.selenium.version}:</p>
-            <p>${it.version}</p>
-
-            <f:form method="post" name="startStopNodeForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
-                <f:entry title="${%SeleniumAgentAction.jelly.selenium.node.control}">
-                    <j:choose>
-                        <j:when test="${it.nodeActive}">
-                            <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.stop}"/>
-                        </j:when>
-                        <j:otherwise>
-                            <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.start}"/>
-                        </j:otherwise>
-                    </j:choose>
+            <f:section title="${%SeleniumAgentAction.jelly.selenium.node.control}">
+                <f:entry>
+                    <table title="${%SeleniumAgentAction.jelly.selenium.node.information}" class="jenkins-table" style="width:100%;">
+                        <tbody>
+                            <tr>
+                                <th style="width:180px; padding:4px 8px;">Node Version</th>
+                                <td style="padding:4px 8px;">${it.version}</td>
+                            </tr>
+                            <tr>
+                                <th style="padding:4px 8px;">${%SeleniumAgentAction.jelly.selenium.node.status}</th>
+                                <td style="padding:4px 8px;">
+                                    <j:choose>
+                                        <j:when test="${it.nodeActive}">
+                                            <span class="jenkins-!-color-green">${%SeleniumAgentAction.jelly.selenium.node.status.active}</span>
+                                        </j:when>
+                                        <j:otherwise>
+                                            <span class="jenkins-!-color-red">${%SeleniumAgentAction.jelly.selenium.node.status.inactive}</span>
+                                        </j:otherwise>
+                                    </j:choose>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <f:form method="post" name="startStopNodeForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
+                        <f:entry>
+                            <j:choose>
+                                <j:when test="${it.nodeActive}">
+                                    <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.stop}"/>
+                                </j:when>
+                                <j:otherwise>
+                                    <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.start}"/>
+                                </j:otherwise>
+                            </j:choose>
+                        </f:entry>
+                    </f:form>
                 </f:entry>
-
-                <f:entry title="${%SeleniumAgentAction.jelly.selenium.node.status}">
-                    <j:choose>
-                        <j:when test="${it.nodeActive}">
-                            <div class="jenkins-!-color-dark-green">${%SeleniumAgentAction.jelly.selenium.node.status.active}</div>
-                        </j:when>
-                        <j:otherwise>
-                            <div class="jenkins-!-color-dark-red">${%SeleniumAgentAction.jelly.selenium.node.status.inactive}</div>
-                        </j:otherwise>
-                    </j:choose>
-                </f:entry>
-            </f:form>
+            </f:section>
 
             <f:section title="${%SeleniumAgentAction.jelly.selenium.node.restart.logs}">
                 <f:entry>
-                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
-                        <j:forEach var="log" items="${it.nodeRestartLogs}">
-                            <div style="padding: 5px 0; border-bottom: 1px solid #eee;">${log}</div>
-                        </j:forEach>
-                        <j:if test="${it.nodeRestartLogs.isEmpty()}">
-                            <div style="color: #666;">${%SeleniumAgentAction.jelly.selenium.node.no.restart.logs}</div>
-                        </j:if>
+                    <div style="width:100%; max-height:320px; overflow-y:auto; border:1px solid #ddd; border-radius:4px; background-color:#1e1e1e; color:#f5f5f5; font-family:monospace; padding:8px 12px;">
+                        <j:choose>
+                            <j:when test="${!it.nodeRestartLogs.isEmpty()}">
+                                <j:forEach var="log" items="${it.nodeRestartLogs}">
+                                    <div style="white-space:pre-wrap; border-bottom:1px solid #333; padding:4px 0;">${log}</div>
+                                </j:forEach>
+                            </j:when>
+                            <j:otherwise>
+                                <div style="color:#aaa; padding:4px 0;">${%SeleniumAgentAction.jelly.no.hub.restart.logs}</div>
+                            </j:otherwise>
+                        </j:choose>
                     </div>
                 </f:entry>
             </f:section>

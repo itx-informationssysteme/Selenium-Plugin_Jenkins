@@ -31,13 +31,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
@@ -381,7 +384,13 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
         Jenkins.get().checkPermission(Jenkins.MANAGE);
 
-        Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class).doStartNode();
+        SeleniumAgentAction action = Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
+
+        if(action == null) {
+            return FormValidation.error("Selenium action not found for agent: " + agentName);
+        }
+
+        action.doStartNode();
 
         return new HttpRedirect(".");
 
@@ -392,7 +401,13 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
         Jenkins.get().checkPermission(Jenkins.MANAGE);
 
-        Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class).doStopNode();
+        SeleniumAgentAction action = Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
+
+        if(action == null) {
+            return FormValidation.error("Selenium action not found for agent: " + agentName);
+        }
+
+        action.doStopNode();
 
         return new HttpRedirect(".");
 
@@ -410,6 +425,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
             return "Selenium Global Property Descriptor";
         }
 
+        @RequirePOST
         public synchronized ListBoxModel doFillSeleniumVersionItems() {
             Jenkins.get().checkPermission(Jenkins.MANAGE);
             ListBoxModel items = new ListBoxModel();
