@@ -14,9 +14,9 @@
                     <l:card title="${%SeleniumGlobalProperty.jelly.version}">
                         <f:form method="post" name="config" action="save">
                             <f:entry>
-                                <f:select field="seleniumVersion" />
+                                <f:select field="seleniumVersion" name="seleniumVersion"/>
                             </f:entry>
-                                <f:submit value="${%SeleniumGlobalProperty.jelly.save}"/>
+                            <f:submit value="${%SeleniumGlobalProperty.jelly.save}"/>
                         </f:form>
                     </l:card>
 
@@ -32,18 +32,14 @@
                                 </j:otherwise>
                             </j:choose>
                             <div style="display:flex; gap:8px; align-items:center; margin-top:0px;">
-                                    <j:choose>
-                                        <j:when test="${it.hubRunning}">
-                                            <a href="${it.hubUrl}/ui/" target="_blank" class="jenkins-button jenkins-button--primary">
-                                                ${%SeleniumGlobalProperty.jelly.stop}
-                                            </a>
-                                        </j:when>
-                                        <j:otherwise>
-                                            <a href="${it.hubUrl}/ui/" target="_blank" class="jenkins-button jenkins-button--primary">
-                                                ${%SeleniumGlobalProperty.jelly.start}
-                                            </a>
-                                        </j:otherwise>
-                                    </j:choose>
+                                <j:choose>
+                                    <j:when test="${it.hubRunning}">
+                                        <f:submit value="${%SeleniumGlobalProperty.jelly.stop}" />
+                                    </j:when>
+                                    <j:otherwise>
+                                        <f:submit value="${%SeleniumGlobalProperty.jelly.start}" />
+                                    </j:otherwise>
+                                </j:choose>
                                 <j:if test="${it.hubRunning}">
                                     <a href="${it.hubUrl}/ui/" target="_blank" class="jenkins-button jenkins-button--primary">
                                         ${%SeleniumGlobalProperty.jelly.open.hub}
