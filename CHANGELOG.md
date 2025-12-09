@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.3...v1.3.4) (2025-12-09)
+
+
+### Bug Fixes
+
+* **bugfix:** Bugfix of issue [#49](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/issues/49) and [#51](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/issues/51) ([ff1572f](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/ff1572f240f88ec01acff10230d945490fc00d3f))
+
 ## [1.3.3](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.2...v1.3.3) (2025-11-25)
 
 
