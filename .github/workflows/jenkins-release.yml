@@ -65,7 +65,7 @@ jobs:
         run: mv target/*.hpi target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: selenium-plugin-jenkins_java-${{ matrix.java }}-hpi
           path: target/selenium-plugin-jenkins_java-${{ matrix.java }}.hpi
