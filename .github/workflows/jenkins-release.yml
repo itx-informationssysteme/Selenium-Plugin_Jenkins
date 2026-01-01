@@ -92,7 +92,7 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
       - name: Download artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: target/
       - name: Semantic Release
