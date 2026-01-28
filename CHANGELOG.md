@@ -1,3 +1,10 @@
+## [1.3.5](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.4...v1.3.5) (2026-01-28)
+
+
+### Bug Fixes
+
+* **bugfix:** Added massive logging, improved Frontend to best practices (no inline onChange), Fixed port bug (port 5555 often already was hold by another process, this caused massive problems when the node was restarted due to a version update or a restart) ([da53a9e](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/commit/da53a9ebd2d37aaef4d5a72f21e987ba6831133d))
+
 ## [1.3.4](https://github.com/itx-informationssysteme/Selenium-Plugin_Jenkins/compare/v1.3.3...v1.3.4) (2025-12-09)
 
 
