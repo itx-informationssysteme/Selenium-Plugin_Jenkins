@@ -68,29 +68,27 @@
                                         <a href="${it.getAgentUrl(agent)}">${agent.displayName}</a>
                                     </td>
                                     <td style="text-align:left; padding:4px 8px;">
-                                        <f:form method="post" action="${it.hasSeleniumServer(agent) ? 'stopSeleniumNode' : 'startSeleniumNode'}">
+                                        <f:form method="post" action="${it.hasSeleniumServer(agent) ? 'stopSeleniumNode' : 'startSeleniumNode'}" class="selenium-toggle-form">
                                             <input type="hidden" name="agentName" value="${agent.name}"/>
 
-                                            <div style="display:inline-flex; align-items:center; gap:4px;">
+                                            <div style="display:inline-flex; align-items:center; gap:8px;">
                                                 <j:set var="toggleId" value="agent-selenium-toggle-${loop.index}"/>
                                                 <span class="jenkins-toggle-switch">
                                                     <j:choose>
                                                         <j:when test="${it.hasSeleniumServer(agent)}">
                                                             <input
-                                                                class="jenkins-toggle-switch__input"
+                                                                class="jenkins-toggle-switch__input selenium-toggle-input"
                                                                 type="checkbox"
                                                                 id="${toggleId}"
                                                                 name="enabled"
-                                                                checked="checked"
-                                                                onchange="this.form.submit()"/>
+                                                                checked="checked"/>
                                                         </j:when>
                                                         <j:otherwise>
                                                             <input
-                                                                class="jenkins-toggle-switch__input"
+                                                                class="jenkins-toggle-switch__input selenium-toggle-input"
                                                                 type="checkbox"
                                                                 id="${toggleId}"
-                                                                name="enabled"
-                                                                onchange="this.form.submit()"/>
+                                                                name="enabled"/>
                                                         </j:otherwise>
                                                     </j:choose>
                                                     <label class="jenkins-toggle-switch__label" for="${toggleId}">
@@ -198,8 +196,9 @@
                                 </table>
 
                                 <div style="margin-top:8px;" class="jenkins-!-text-color">
-                                    <a href="javascript:void(0)"
-                                       onclick="toggleSlots('slots-${loop.index}')"
+                                    <a href="#"
+                                       class="selenium-slots-toggle"
+                                       data-slots-id="slots-${loop.index}"
                                        style="text-decoration:none; font-weight:bold;">
                                         <span id="slots-toggle-${loop.index}">▼</span> ${%SeleniumGlobalProperty.jelly.slots.show} (${node.slots.size()})
                                     </a>

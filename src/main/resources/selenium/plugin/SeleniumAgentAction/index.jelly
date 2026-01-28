@@ -22,7 +22,7 @@
                                 <th style="padding:4px 8px;">${%SeleniumAgentAction.jelly.selenium.node.status}</th>
                                 <td style="padding:4px 8px;">
                                     <j:choose>
-                                        <j:when test="${it.nodeActive}">
+                                        <j:when test="${it.nodeActiveConfigured}">
                                             <span class="jenkins-!-color-green">${%SeleniumAgentAction.jelly.selenium.node.status.active}</span>
                                         </j:when>
                                         <j:otherwise>
@@ -33,10 +33,10 @@
                             </tr>
                         </tbody>
                     </table>
-                    <f:form method="post" name="startStopNodeForm" action="${it.nodeActive ? 'stopNode' : 'startNode'}">
+                    <f:form method="post" name="startStopNodeForm" action="${it.nodeActiveConfigured ? 'stopNode' : 'startNode'}">
                         <f:entry>
                             <j:choose>
-                                <j:when test="${it.nodeActive}">
+                                <j:when test="${it.nodeActiveConfigured}">
                                     <f:submit value="${%SeleniumAgentAction.jelly.selenium.node.stop}"/>
                                 </j:when>
                                 <j:otherwise>

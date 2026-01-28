@@ -33,31 +33,43 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import jenkins.model.Jenkins;
-import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class SeleniumAgentAction implements Action {
+
+    private static final Logger LOGGER = Logger.getLogger(SeleniumAgentAction.class.getName());
 
     private final transient Computer computer;
 
     private transient Proc nodeProcess;
     private boolean nodeActive;
     private transient List<String> nodeRestartLogs = new ArrayList<>();
-    private transient long lastNodeCheckTime;
 
     public SeleniumAgentAction(Computer computer) {
         this.computer = computer;
+        LOGGER.log(Level.INFO, "SeleniumAgentAction created for computer: {0}", computer.getName());
     }
 
     @Initializer(after = InitMilestone.JOB_LOADED)
     public static void initAfterStartup() {
+        LOGGER.info("initAfterStartup: Starting Selenium Agent initialization...");
         for (Computer computer : Jenkins.get().getComputers()) {
             SeleniumAgentAction nodeAction = computer.getAction(SeleniumAgentAction.class);
             if (nodeAction != null) {
+                LOGGER.log(Level.INFO, "initAfterStartup: Loading config for computer: {0}", computer.getName());
+                nodeAction.addNodeRestartLog("Jenkins startup - loading saved configuration");
                 nodeAction.load();
+
+                LOGGER.log(Level.INFO, "initAfterStartup: nodeActive={0} for computer: {1}",
+                    new Object[]{nodeAction.nodeActive, computer.getName()});
+                nodeAction.addNodeRestartLog("Loaded nodeActive=" + nodeAction.nodeActive);
+
                 nodeAction.checkAndRestartNodeIfNeeded();
 
                 new java.util.Timer()
@@ -69,16 +81,21 @@ public class SeleniumAgentAction implements Action {
                                 },
                                 300000,
                                 300000); // check node every 5 minutes
+                LOGGER.log(Level.INFO, "initAfterStartup: Scheduled 5-minute health check for: {0}", computer.getName());
             }
         }
+        LOGGER.info("initAfterStartup: Selenium Agent initialization complete");
     }
 
     @Initializer(before = InitMilestone.SYSTEM_CONFIG_LOADED)
     public static void registerShutdownHook() {
+        LOGGER.info("registerShutdownHook: Registering Jenkins shutdown hook for Selenium nodes");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            LOGGER.info("Shutdown hook triggered - stopping all Selenium nodes");
             for (Computer computer : Jenkins.get().getComputers()) {
                 SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
                 if (action != null && action.nodeProcess != null) {
+                    LOGGER.log(Level.INFO, "Stopping Selenium node on: {0}", computer.getName());
                     action.stopNode();
                 }
             }
@@ -95,10 +112,14 @@ public class SeleniumAgentAction implements Action {
 
     public void setNodeProcess(Proc nodeProcess) {
         this.nodeProcess = nodeProcess;
+        LOGGER.log(Level.INFO, "setNodeProcess: nodeProcess set to {0} for computer: {1}",
+            new Object[]{nodeProcess != null ? "non-null" : "null", computer.getName()});
     }
 
     @DataBoundSetter
     public void setNodeActive(boolean nodeActive) {
+        LOGGER.log(Level.INFO, "setNodeActive: {0} -> {1} for computer: {2}",
+            new Object[]{this.nodeActive, nodeActive, computer.getName()});
         this.nodeActive = nodeActive;
         save();
     }
@@ -132,9 +153,12 @@ public class SeleniumAgentAction implements Action {
 
     public synchronized void save() {
         try {
+            LOGGER.log(Level.FINE, "save: Saving config for computer: {0}, nodeActive={1}",
+                new Object[]{computer.getName(), nodeActive});
             getConfigFile().write(this);
             Jenkins.get().save();
         } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "save: Failed to save config for: " + computer.getName(), e);
             throw new RuntimeException("Failed to save Selenium config", e);
         }
     }
@@ -142,9 +166,17 @@ public class SeleniumAgentAction implements Action {
     public synchronized void load() {
         try {
             if (getConfigFile().exists()) {
+                LOGGER.log(Level.INFO, "load: Loading config from file for computer: {0}", computer.getName());
                 getConfigFile().unmarshal(this);
+                LOGGER.log(Level.INFO, "load: Loaded nodeActive={0} for computer: {1}",
+                    new Object[]{nodeActive, computer.getName()});
+                addNodeRestartLog("Loaded saved config: nodeActive=" + nodeActive);
+            } else {
+                LOGGER.log(Level.INFO, "load: No config file found for computer: {0}", computer.getName());
+                addNodeRestartLog("No saved config file found, using defaults");
             }
         } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "load: Failed to load config for: " + computer.getName(), e);
             throw new RuntimeException("Failed to load Selenium config", e);
         }
     }
@@ -155,121 +187,362 @@ public class SeleniumAgentAction implements Action {
 
     @RequirePOST
     public HttpResponse doStartNode() {
+        LOGGER.log(Level.INFO, "doStartNode: Manual start triggered for computer: {0}", computer.getName());
+        addNodeRestartLog("Manual node start triggered via UI");
         Jenkins.get().checkPermission(Jenkins.MANAGE);
         return startNodeInternal();
     }
 
     @RequirePOST
     public HttpResponse startNodeInternal() {
-        if (computer == null || computer.isOffline()) return FormValidation.error("Computer ist offline.");
+        LOGGER.log(Level.INFO, "startNodeInternal: Starting Selenium node for computer: {0}", computer.getName());
+        addNodeRestartLog("startNodeInternal() called");
+
+        if (computer == null) {
+            LOGGER.log(Level.WARNING, "startNodeInternal: Computer is null");
+            addNodeRestartLog("ERROR: Computer is null");
+            return FormValidation.error("Computer is null.");
+        }
+
+        if (computer.isOffline()) {
+            LOGGER.log(Level.WARNING, "startNodeInternal: Computer is offline: {0}", computer.getName());
+            addNodeRestartLog("ERROR: Computer is offline");
+            return FormValidation.error("Computer ist offline.");
+        }
+
         SeleniumGlobalProperty globalProp = ManagementLink.all().get(SeleniumGlobalProperty.class);
-        if (globalProp == null || !globalProp.getHubActive()) {
-            addNodeRestartLog("Selenium Hub is not active. Please start the Hub and try again.");
+        if (globalProp == null) {
+            LOGGER.log(Level.WARNING, "startNodeInternal: SeleniumGlobalProperty is null");
+            addNodeRestartLog("ERROR: SeleniumGlobalProperty is null");
+            return FormValidation.error("Selenium Global Property not found.");
+        }
+
+        if (!globalProp.getHubActive()) {
+            LOGGER.log(Level.WARNING, "startNodeInternal: Selenium Hub is not active");
+            addNodeRestartLog("ERROR: Selenium Hub is not active. Please start the Hub first.");
             return FormValidation.error(Messages.SeleniumAgentAction_error_hubNotActive());
         }
+
+        String hubUrl = globalProp.getHubUrl();
+        LOGGER.log(Level.INFO, "startNodeInternal: Hub URL is: {0}", hubUrl);
+        addNodeRestartLog("Hub URL: " + hubUrl);
+
         try {
             FilePath tmp = null;
             if (computer.getNode() != null) {
                 Node node = computer.getNode();
                 if (node == null) {
+                    LOGGER.log(Level.WARNING, "startNodeInternal: Node is null");
+                    addNodeRestartLog("ERROR: Node is null");
                     return FormValidation.error("No Node found.");
                 }
                 FilePath rootPath = node.getRootPath();
                 if (rootPath == null) {
+                    LOGGER.log(Level.WARNING, "startNodeInternal: RootPath is null");
+                    addNodeRestartLog("ERROR: RootPath is null");
                     return FormValidation.error("No RootPath found.");
                 }
                 tmp = rootPath.child("selenium-tmp");
+                LOGGER.log(Level.INFO, "startNodeInternal: Using temp path: {0}", tmp.getRemote());
+                addNodeRestartLog("Temp path: " + tmp.getRemote());
             }
             if (tmp == null) {
+                LOGGER.log(Level.WARNING, "startNodeInternal: TempPath is null");
+                addNodeRestartLog("ERROR: TempPath is null");
                 return FormValidation.error("No TempPath found.");
             }
             tmp.mkdirs();
 
             killByPidFile(tmp);
 
+            addNodeRestartLog("Checking for processes on port 5555...");
+            boolean isUnix = Boolean.TRUE.equals(computer.isUnix());
+            try {
+                Launcher killLauncher = new Launcher.RemoteLauncher(
+                        TaskListener.NULL, computer.getChannel(), isUnix);
+                if (isUnix) {
+                    // On Unix/Mac: find and kill process on port 5555
+                    ByteArrayOutputStream lsofOut = new ByteArrayOutputStream();
+                    killLauncher.launch()
+                            .cmds("sh", "-c", "lsof -ti:5555 | xargs kill -9 2>/dev/null || true")
+                            .stdout(lsofOut)
+                            .stderr(lsofOut)
+                            .join();
+                    String lsofResult = lsofOut.toString(StandardCharsets.UTF_8).trim();
+                    if (!lsofResult.isEmpty()) {
+                        addNodeRestartLog("Killed process on port 5555: " + lsofResult);
+                    } else {
+                        addNodeRestartLog("No process found on port 5555");
+                    }
+                } else {
+                    killLauncher.launch()
+                            .cmds("cmd", "/c", "for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :5555') do taskkill /PID %a /F 2>nul")
+                            .stdout(TaskListener.NULL)
+                            .join();
+                    addNodeRestartLog("Attempted to kill process on port 5555 (Windows)");
+                }
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                addNodeRestartLog("Warning: Could not check/kill process on port 5555: " + e.getMessage());
+            }
+
             String version = getVersion().replaceAll("[^0-9.]", "");
+            LOGGER.log(Level.INFO, "startNodeInternal: Selenium version: {0}", version);
+            addNodeRestartLog("Selenium version: " + version);
+
             String jarUrl = "https://github.com/SeleniumHQ/selenium/releases/download/selenium-" + version
                     + "/selenium-server-" + version + ".jar";
             FilePath jar = tmp.child("selenium-" + version + ".jar");
 
             if (!jar.exists()) {
+                LOGGER.log(Level.INFO, "startNodeInternal: Downloading Selenium JAR from: {0}", jarUrl);
+                addNodeRestartLog("Downloading Selenium JAR from: " + jarUrl);
                 jar.copyFrom(new URL(jarUrl));
+                addNodeRestartLog("Download complete");
+            } else {
+                LOGGER.log(Level.INFO, "startNodeInternal: Selenium JAR already exists: {0}", jar.getRemote());
+                addNodeRestartLog("Selenium JAR already exists, skipping download");
             }
 
-            Launcher launcher = new Launcher.RemoteLauncher(
-                    TaskListener.NULL, computer.getChannel(), Boolean.TRUE.equals(computer.isUnix()));
-            Launcher.ProcStarter ps = launcher.launch()
-                    .cmds(
-                            "java",
-                            "-jar",
-                            jar.getRemote(),
-                            "node",
-                            "--selenium-manager",
-                            "true",
-                            "--hub",
-                            Objects.requireNonNull(ManagementLink.all().get(SeleniumGlobalProperty.class))
-                                    .getHubUrl())
-                    .pwd(tmp)
-                    .stdout(TaskListener.NULL);
+            LOGGER.log(Level.INFO, "startNodeInternal: Launching Selenium node process...");
+            addNodeRestartLog("Launching Selenium node with --hub " + hubUrl);
 
-            setNodeProcess(ps.start());
+            addNodeRestartLog("System Info: isUnix=" + isUnix + ", computer=" + computer.getName());
+
+            try {
+                Launcher javaCheckLauncher = new Launcher.RemoteLauncher(
+                        TaskListener.NULL, computer.getChannel(), isUnix);
+                ByteArrayOutputStream javaVersionOut = new ByteArrayOutputStream();
+                int javaExitCode = javaCheckLauncher.launch()
+                        .cmds("java", "-version")
+                        .stdout(javaVersionOut)
+                        .stderr(javaVersionOut)
+                        .join();
+                String javaVersionOutput = javaVersionOut.toString(StandardCharsets.UTF_8);
+                addNodeRestartLog("Java check exit code: " + javaExitCode);
+                if (!javaVersionOutput.isEmpty()) {
+                    String[] lines = javaVersionOutput.split("\n");
+                    for (String line : lines) {
+                        if (!line.trim().isEmpty()) {
+                            addNodeRestartLog("Java: " + line.trim());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                addNodeRestartLog("WARNING: Could not check Java version: " + e.getMessage());
+            }
+
+            // Build command - use nohup on Unix/Mac to run as background daemon
+            List<String> cmdList = new ArrayList<>();
+
+            if (isUnix) {
+                // On Unix/Mac: use nohup to detach from terminal and redirect output to file
+                cmdList.add("nohup");
+            }
+
+            cmdList.add("java");
+            cmdList.add("-jar");
+            cmdList.add(jar.getRemote());
+            cmdList.add("node");
+            cmdList.add("--selenium-manager");
+            cmdList.add("true");
+            cmdList.add("--hub");
+            cmdList.add(hubUrl);
+            cmdList.add("--port");
+            cmdList.add("5555");
+
+            String[] cmdArray = cmdList.toArray(new String[0]);
+            addNodeRestartLog("Command: " + String.join(" ", cmdArray));
+            addNodeRestartLog("Working directory: " + tmp.getRemote());
+            addNodeRestartLog("Running as background daemon (nohup on Unix/Mac)");
+
+            Launcher launcher = new Launcher.RemoteLauncher(
+                    TaskListener.NULL, computer.getChannel(), isUnix);
+
+            FilePath logFile = tmp.child("selenium-node.log");
+            addNodeRestartLog("Log file: " + logFile.getRemote());
+
+            Launcher.ProcStarter ps = launcher.launch()
+                    .cmds(cmdArray)
+                    .pwd(tmp);
+
+            if (isUnix) {
+                ps.stdout(logFile.write());
+                ps.stderr(logFile.write());
+            } else {
+                ByteArrayOutputStream processOutput = new ByteArrayOutputStream();
+                ps.stdout(processOutput);
+                ps.stderr(processOutput);
+            }
+
+            addNodeRestartLog("Starting process...");
+            Proc process = ps.start();
+            setNodeProcess(process);
+            addNodeRestartLog("Process started");
+
+            Thread.sleep(5000);
+
+            if (isUnix && logFile.exists()) {
+                try {
+                    String logContent = logFile.readToString();
+                    if (!logContent.isEmpty()) {
+                        String[] lines = logContent.split("\n");
+
+                        addNodeRestartLog("=== Selenium Node Log ===");
+                        int startIndex = Math.max(0, lines.length - 15);
+                        for (int i = startIndex; i < lines.length; i++) {
+                            String line = lines[i];
+                            if (!line.trim().isEmpty()) {
+                                addNodeRestartLog(line.trim());
+                            }
+                        }
+                        addNodeRestartLog("=== End of Log ===");
+                    }
+                } catch (Exception e) {
+                    addNodeRestartLog("Could not read log file: " + e.getMessage());
+                }
+            }
+
+            try {
+                boolean isAlive = process.isAlive();
+                addNodeRestartLog("Process running: " + isAlive);
+                if (!isAlive) {
+                    addNodeRestartLog("Process died shortly after start - check log above for errors");
+                    setNodeActive(false);
+                    return FormValidation.error("Selenium Node process died shortly after start.");
+                }
+            } catch (Exception e) {
+                // On Unix with nohup, isAlive() may fail - that's OK
+                addNodeRestartLog("Could not verify process status (normal for daemon mode)");
+            }
+
+            LOGGER.log(Level.INFO, "startNodeInternal: Selenium node started for: {0}", computer.getName());
+            addNodeRestartLog("Selenium Node started successfully");
+
             setNodeActive(true);
-            addNodeRestartLog("Started Selenium Node");
+            addNodeRestartLog("nodeActive set to true");
 
             writeNodePid(tmp, jar.getRemote());
+            LOGGER.log(Level.INFO, "startNodeInternal: PID file written");
+            addNodeRestartLog("PID file written");
 
             save();
+            LOGGER.log(Level.INFO, "startNodeInternal: Config saved");
+            addNodeRestartLog("Configuration saved - Node should now register with Hub");
+
         } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error starting Selenium Node on " + computer.getName(), e);
+            addNodeRestartLog("Failed to start Selenium Node: " + e.getMessage());
             setNodeActive(false);
-            addNodeRestartLog("Error starting Selenium Node: " + e.getMessage());
-            return FormValidation.error("An error occurred while starting Selenium Node: " + e.getMessage());
+            return FormValidation.error("Failed to start Selenium Node: " + e.getMessage());
         }
         return new HttpRedirect(".");
     }
 
     @RequirePOST
     public HttpResponse doStopNode() {
+        LOGGER.log(Level.INFO, "doStopNode: Manual stop triggered for computer: {0}", computer.getName());
+        addNodeRestartLog("Manual node stop triggered via UI");
         setNodeActive(false);
         return stopNode();
     }
 
     public HttpResponse stopNode() {
         synchronized (this) {
+            LOGGER.log(Level.INFO, "stopNode: Stopping Selenium node for computer: {0}", computer.getName());
+            addNodeRestartLog("stopNode() called");
+
             Jenkins.get().checkPermission(Jenkins.MANAGE);
             if (nodeProcess != null) {
                 try {
+                    LOGGER.log(Level.INFO, "stopNode: Killing node process");
+                    addNodeRestartLog("Killing node process...");
                     nodeProcess.kill();
+                    LOGGER.log(Level.INFO, "stopNode: Node process killed successfully");
+                    addNodeRestartLog("Node process killed successfully");
                 } catch (IOException | InterruptedException e) {
-                    addNodeRestartLog("Error stopping Selenium Node: " + e.getMessage());
+                    LOGGER.log(Level.SEVERE, "stopNode: Error stopping Selenium Node", e);
+                    addNodeRestartLog("ERROR stopping Selenium Node: " + e.getMessage());
                     return FormValidation.error("Error stopping Selenium Node: " + e.getMessage());
                 }
                 setNodeProcess(null);
-                addNodeRestartLog("Stopped Selenium Node");
+                addNodeRestartLog("nodeProcess set to null");
+            } else {
+                LOGGER.log(Level.INFO, "stopNode: nodeProcess is already null, nothing to stop");
+                addNodeRestartLog("nodeProcess is already null, nothing to stop");
             }
         }
         return new HttpRedirect(".");
     }
 
     public boolean getNodeActive() throws IOException, InterruptedException {
-        return nodeProcess != null && nodeProcess.isAlive();
+        boolean isAlive = nodeProcess != null && nodeProcess.isAlive();
+        LOGGER.log(Level.FINE, "getNodeActive: nodeProcess={0}, isAlive={1}, computer={2}",
+            new Object[]{nodeProcess != null ? "non-null" : "null", isAlive, computer.getName()});
+        return isAlive;
+    }
+
+    public boolean isNodeActiveConfigured() {
+        return nodeActive;
     }
 
     public synchronized void addNodeRestartLog(String message) {
-        nodeRestartLogs.add(0, new java.util.Date() + ": " + message);
-        if (nodeRestartLogs.size() > 25) {
+        String logEntry = new java.util.Date() + ": " + message;
+        LOGGER.log(Level.INFO, "NodeLog [{0}]: {1}", new Object[]{computer.getName(), message});
+        nodeRestartLogs.add(0, logEntry);
+        if (nodeRestartLogs.size() > 50) { // Increased from 25 to 50 for more history
             nodeRestartLogs.remove(nodeRestartLogs.size() - 1);
         }
-        save();
     }
 
     public void checkAndRestartNodeIfNeeded() {
+        LOGGER.log(Level.INFO, "checkAndRestartNodeIfNeeded: Checking node status for computer: {0}", computer.getName());
+        addNodeRestartLog("checkAndRestartNodeIfNeeded() called");
+
         try {
-            if (nodeActive && (!getNodeActive() || nodeProcess == null)) {
-                addNodeRestartLog("Trigger automatic restart of Selenium Node (Node not reachable or stopped)");
-                this.startNodeInternal();
+            // Check if agent is reachable before attempting to check node status
+            if (computer == null) {
+                LOGGER.log(Level.WARNING, "checkAndRestartNodeIfNeeded: Computer is null");
+                addNodeRestartLog("Computer is null, skipping check");
+                return;
+            }
+
+            if (computer.isOffline()) {
+                LOGGER.log(Level.INFO, "checkAndRestartNodeIfNeeded: Computer is offline: {0}", computer.getName());
+                addNodeRestartLog("Computer is offline, skipping check");
+                return;
+            }
+
+            if (computer.getChannel() == null) {
+                LOGGER.log(Level.WARNING, "checkAndRestartNodeIfNeeded: Computer channel is null: {0}", computer.getName());
+                addNodeRestartLog("Computer channel is null, skipping check");
+                return;
+            }
+
+            LOGGER.log(Level.INFO, "checkAndRestartNodeIfNeeded: nodeActive={0}, nodeProcess={1}",
+                new Object[]{nodeActive, nodeProcess != null ? "non-null" : "null"});
+            addNodeRestartLog("Status check: nodeActive=" + nodeActive + ", nodeProcess=" + (nodeProcess != null ? "exists" : "null"));
+
+            // If nodeActive is true (node SHOULD be running), ensure the node IS running
+            if (nodeActive) {
+                boolean nodeRunning = nodeProcess != null && getNodeActive();
+                LOGGER.log(Level.INFO, "checkAndRestartNodeIfNeeded: nodeActive=true, nodeRunning={0}", nodeRunning);
+                addNodeRestartLog("nodeActive=true, checking if process is alive: " + nodeRunning);
+
+                if (!nodeRunning) {
+                    LOGGER.log(Level.INFO, "checkAndRestartNodeIfNeeded: Node should be running but isn't, restarting...");
+                    addNodeRestartLog("Node should be running but process is not alive - triggering restart");
+                    this.startNodeInternal();
+                } else {
+                    addNodeRestartLog("Node is running as expected, no action needed");
+                }
+            } else {
+                LOGGER.log(Level.INFO, "checkAndRestartNodeIfNeeded: nodeActive=false, no restart needed");
+                addNodeRestartLog("nodeActive=false, no restart needed");
             }
         } catch (IOException | InterruptedException e) {
-            addNodeRestartLog("Error checking Selenium Node: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "checkAndRestartNodeIfNeeded: Error checking Selenium Node", e);
+            addNodeRestartLog("ERROR checking Selenium Node: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
