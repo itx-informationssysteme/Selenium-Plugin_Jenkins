@@ -19,9 +19,19 @@ import hudson.Extension;
 import hudson.model.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Extension
 public class SeleniumAgentPropertyLink extends TransientComputerActionFactory {
+
+    private static final Logger LOGGER = Logger.getLogger(SeleniumAgentPropertyLink.class.getName());
+
+    // Cache for SeleniumAgentAction instances to avoid creating new ones each time
+    private static final Map<String, SeleniumAgentAction> actionCache = new ConcurrentHashMap<>();
+
     @Override
     public Collection<? extends Action> createFor(Computer target) {
         Node node = target.getNode();
@@ -30,6 +40,32 @@ public class SeleniumAgentPropertyLink extends TransientComputerActionFactory {
             return Collections.singletonList(ManagementLink.all().get(SeleniumGlobalProperty.class));
         }
 
-        return Collections.singletonList(new SeleniumAgentAction(target));
+        String computerName = target.getName();
+
+        // Use cached action if available, otherwise create new one and load config
+        SeleniumAgentAction action = actionCache.computeIfAbsent(computerName, name -> {
+            LOGGER.log(Level.INFO, "Creating new SeleniumAgentAction for: {0}", name);
+            SeleniumAgentAction newAction = new SeleniumAgentAction(target);
+            newAction.load(); // Load saved configuration
+            LOGGER.log(Level.INFO, "Loaded config for {0}: nodeActive={1}",
+                new Object[]{name, newAction.isNodeActiveConfigured()});
+            return newAction;
+        });
+
+        return Collections.singletonList(action);
+    }
+
+    /**
+     * Clear the cache for a specific computer (e.g., when it's removed)
+     */
+    public static void clearCache(String computerName) {
+        actionCache.remove(computerName);
+    }
+
+    /**
+     * Get a cached action for a computer
+     */
+    public static SeleniumAgentAction getCachedAction(String computerName) {
+        return actionCache.get(computerName);
     }
 }

@@ -48,12 +48,16 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 @Extension
 public class SeleniumGlobalProperty extends ManagementLink implements Describable<SeleniumGlobalProperty> {
 
+    private static final Logger LOGGER = Logger.getLogger(SeleniumGlobalProperty.class.getName());
+
     private transient Process hubProcess;
     private transient List<String> hubRestartLogs = new ArrayList<>();
-    private transient long lastHubCheckTime;
 
     private String seleniumVersion;
     private boolean hubActive;
@@ -132,7 +136,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
     private void restartAllActiveAgents() {
         for (Computer computer : Jenkins.get().getComputers()) {
-            if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
+            if (computer.getName().isEmpty() || computer.getSearchName().equals("Jenkins")) {
                 continue;
             }
 
@@ -263,7 +267,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
         try {
             URL statusUrl = new URL(getHubUrl() + "/status");
             try (InputStream in = statusUrl.openStream()) {
-                IOUtils.toString(in, "UTF-8"); // nur aufrufbar = erreichbar
+                IOUtils.toString(in, StandardCharsets.UTF_8);
                 return true;
             }
         } catch (IOException e) {
@@ -275,7 +279,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
         try {
             URL statusUrl = new URL(getHubUrl() + "/status");
             try (InputStream in = statusUrl.openStream()) {
-                String response = IOUtils.toString(in, "UTF-8");
+                String response = IOUtils.toString(in, StandardCharsets.UTF_8);
                 JSONObject status = JSONObject.fromObject(response);
                 return status.getJSONObject("value").getBoolean("ready");
             }
@@ -321,15 +325,25 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
     }
 
     public boolean hasSeleniumServer(Computer computer) throws IOException, InterruptedException {
-        if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
+        if (computer.getName().isEmpty() || computer.getSearchName().equals("Jenkins")) {
             return isHubReachable();
         }
         SeleniumAgentAction action = computer.getAction(SeleniumAgentAction.class);
-        return action != null && action.getNodeActive();
+        if (action == null) {
+            return false;
+        }
+        // Use getNodeActive() which checks the actual process status
+        // not just the saved nodeActive flag
+        try {
+            return action.getNodeActive();
+        } catch (IOException | InterruptedException e) {
+            // If we can't check the status (e.g., agent disconnected), return the saved flag
+            return action.isNodeActiveConfigured();
+        }
     }
 
     public String getAgentUrl(Computer computer) {
-        if (computer.getName().equals("") || computer.getSearchName().equals("Jenkins")) {
+        if (computer.getName().isEmpty() || computer.getSearchName().equals("Jenkins")) {
             return Jenkins.get().getRootUrl() + "computer/(built-in)/selenium-settings";
         }
         return Jenkins.get().getRootUrl() + "computer/" + computer.getName() + "/selenium";
@@ -339,7 +353,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
         try {
             URL statusUrl = new URL(getHubUrl() + "/status");
             try (InputStream in = statusUrl.openStream()) {
-                String response = IOUtils.toString(in, "UTF-8");
+                String response = IOUtils.toString(in, StandardCharsets.UTF_8);
                 return JSONObject.fromObject(response);
             }
         } catch (IOException e) {
