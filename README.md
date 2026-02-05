@@ -2,31 +2,40 @@
 
 A Jenkins plugin that integrates Selenium Grid directly into your Jenkins environment. It allows you to easily configure and run Selenium Hub and Nodes on your Jenkins Agents.
 
-## Release
+## Features
 
-You can find the latest Release [here](https://github.com/julianboehne/Selenium-Plugin_Jenkins/releases).
+- **Selenium Hub Management**: Start and stop the Selenium Hub directly from the Jenkins UI
+- **Selenium Node Management**: Configure and manage Selenium Nodes on your Jenkins agents
+- **Version Selection**: Choose the Selenium version to use from available releases
+- **Health Checks**: Automatic health monitoring and restart of failed nodes
+- **Grid Status**: View the status of the Selenium Grid including registered nodes and available slots
 
----
+## Configuration
 
-## 🛠️ Development & Local Testing
+1. Navigate to **Manage Jenkins** > **Selenium Settings**
+2. Select a Selenium version from the dropdown
+3. Click **Save** to apply the configuration
+4. Start the Selenium Hub using the **Start Hub** button
 
-To build and run the plugin locally:
+## Agent Configuration
 
-```bash
-# Compile, test, and validate code style
-mvn clean verify
+Each Jenkins agent can run a Selenium Node. To configure:
 
-# Auto-format (if needed)
-mvn spotless:apply
+1. Navigate to the agent's page
+2. Click on **Selenium** in the sidebar
+3. Use the toggle to enable/disable the Selenium Node on this agent
 
-# Run a local Jenkins instance with the plugin
-mvn -Dhost=0.0.0.0 hpi:run
-```
+## Screenshots
 
-It's also possible to run the Plugin in a Docker Jenkins Container, but following Ports are required to be exposed:
-- 4444 - Selenium Hub
-- 4442-4443 - Connect Nodes to Selenium Hub
-# Plugin Overlay
 ![Plugin Dashboard](images/jenkins-selenium-settings.png)
 ![Plugin Agent Dashboard](images/jenkins-selenium-node.png)
 ![Selenium-Hub](images/selenium-hub.png)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+

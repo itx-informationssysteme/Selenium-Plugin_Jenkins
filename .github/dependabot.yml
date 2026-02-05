@@ -2,11 +2,26 @@
 
 version: 2
 updates:
-- package-ecosystem: maven
-  directory: /
-  schedule:
-    interval: monthly
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: monthly
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - skip-changelog
+    groups:
+      jenkins-bom:
+        patterns:
+          - "io.jenkins.tools.bom:*"
+      jenkins-plugins:
+        patterns:
+          - "org.jenkins-ci.plugins:*"
+          - "org.jenkins-ci.plugins.workflow:*"
+          - "io.jenkins.plugins:*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - skip-changelog

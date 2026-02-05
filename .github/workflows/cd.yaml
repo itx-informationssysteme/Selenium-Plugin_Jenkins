@@ -1,0 +1,17 @@
+# This workflow is the standard Jenkins CD workflow for plugin releases.
+# See https://www.jenkins.io/doc/developer/publishing/releasing-cd/
+
+name: cd
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate:
+    uses: jenkins-infra/.github/.github/workflows/cd.yaml@master
+    secrets:
+      MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+      MAVEN_TOKEN: ${{ secrets.MAVEN_TOKEN }}
+

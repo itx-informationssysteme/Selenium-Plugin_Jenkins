@@ -32,39 +32,35 @@ public class SeleniumAgentPropertyLink extends TransientComputerActionFactory {
     // Cache for SeleniumAgentAction instances to avoid creating new ones each time
     private static final Map<String, SeleniumAgentAction> actionCache = new ConcurrentHashMap<>();
 
+    private boolean isController(Computer target) {
+        return target instanceof jenkins.model.Jenkins.MasterComputer;
+    }
+
     @Override
     public Collection<? extends Action> createFor(Computer target) {
-        Node node = target.getNode();
-
-        if (node != null && "Jenkins".equals(node.getSearchName())) {
+        if (isController(target)) {
             return Collections.singletonList(ManagementLink.all().get(SeleniumGlobalProperty.class));
         }
 
         String computerName = target.getName();
 
-        // Use cached action if available, otherwise create new one and load config
         SeleniumAgentAction action = actionCache.computeIfAbsent(computerName, name -> {
-            LOGGER.log(Level.INFO, "Creating new SeleniumAgentAction for: {0}", name);
+            LOGGER.log(Level.FINE, "Creating new SeleniumAgentAction for: {0}", name);
             SeleniumAgentAction newAction = new SeleniumAgentAction(target);
             newAction.load(); // Load saved configuration
-            LOGGER.log(Level.INFO, "Loaded config for {0}: nodeActive={1}",
-                new Object[]{name, newAction.isNodeActiveConfigured()});
+            LOGGER.log(Level.FINE, "Loaded config for {0}: nodeActive={1}", new Object[] {
+                name, newAction.isNodeActiveConfigured()
+            });
             return newAction;
         });
 
         return Collections.singletonList(action);
     }
 
-    /**
-     * Clear the cache for a specific computer (e.g., when it's removed)
-     */
     public static void clearCache(String computerName) {
         actionCache.remove(computerName);
     }
 
-    /**
-     * Get a cached action for a computer
-     */
     public static SeleniumAgentAction getCachedAction(String computerName) {
         return actionCache.get(computerName);
     }

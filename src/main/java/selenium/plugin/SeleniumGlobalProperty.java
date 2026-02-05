@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
@@ -47,9 +48,6 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Extension
 public class SeleniumGlobalProperty extends ManagementLink implements Describable<SeleniumGlobalProperty> {
@@ -113,8 +111,15 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
     }
 
     @RequirePOST
-    public HttpResponse doSave(@QueryParameter String seleniumVersion) {
+    public HttpResponse doSave(org.kohsuke.stapler.StaplerRequest req) throws javax.servlet.ServletException {
         Jenkins.get().checkPermission(Jenkins.MANAGE);
+
+        net.sf.json.JSONObject formData = req.getSubmittedForm();
+        String seleniumVersion = formData.getString("seleniumVersion");
+
+        if (seleniumVersion == null || seleniumVersion.isEmpty()) {
+            return FormValidation.error("Please select a Selenium version.");
+        }
 
         boolean versionChanged = !seleniumVersion.equals(this.seleniumVersion);
         setSeleniumVersion(seleniumVersion);
@@ -161,16 +166,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
         if (instance != null) {
             instance.load();
             instance.checkAndRestartHubIfNeeded();
-
-            new java.util.Timer()
-                    .scheduleAtFixedRate(
-                            new java.util.TimerTask() {
-                                public void run() {
-                                    instance.checkAndRestartHubIfNeeded();
-                                }
-                            },
-                            300000,
-                            300000); // check hub every 5 minutes
+            // Periodic health check is now handled by SeleniumHubHealthCheck
         }
     }
 
@@ -191,7 +187,7 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
     @Override
     public String getIconFileName() {
-        return "/plugin/selenium-hub/48x48/selenium.svg";
+        return "symbol-selenium-icon-solid plugin-oss-symbols-api";
     }
 
     @RequirePOST
@@ -398,16 +394,16 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
         Jenkins.get().checkPermission(Jenkins.MANAGE);
 
-        SeleniumAgentAction action = Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
+        SeleniumAgentAction action =
+                Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
 
-        if(action == null) {
+        if (action == null) {
             return FormValidation.error("Selenium action not found for agent: " + agentName);
         }
 
         action.doStartNode();
 
         return new HttpRedirect(".");
-
     }
 
     @POST
@@ -415,18 +411,17 @@ public class SeleniumGlobalProperty extends ManagementLink implements Describabl
 
         Jenkins.get().checkPermission(Jenkins.MANAGE);
 
-        SeleniumAgentAction action = Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
+        SeleniumAgentAction action =
+                Objects.requireNonNull(Jenkins.get().getComputer(agentName)).getAction(SeleniumAgentAction.class);
 
-        if(action == null) {
+        if (action == null) {
             return FormValidation.error("Selenium action not found for agent: " + agentName);
         }
 
         action.doStopNode();
 
         return new HttpRedirect(".");
-
     }
-
 
     @Extension
     public static class DescriptorImpl extends Descriptor<SeleniumGlobalProperty> {

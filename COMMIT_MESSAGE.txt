@@ -1,0 +1,94 @@
+feat: Address Jenkins plugin hosting requirements from repository-permissions-updater review
+
+This commit implements all mandatory and recommended changes from the Jenkins
+repository-permissions-updater review (Issue #4720).
+
+## Mandatory Changes
+
+### Icon Updates
+- Changed icon in `SeleniumAgentAction.java` from `/plugin/selenium-hub/48x48/selenium.svg`
+  to `symbol-selenium-icon-solid plugin-oss-symbols-api`
+- Changed icon in `SeleniumGlobalProperty.java` to use the same symbol-based icon
+
+### Form Data Handling
+- Fixed `doSave()` method in `SeleniumGlobalProperty.java` to use `StaplerRequest`
+  and `req.getSubmittedForm()` instead of `@QueryParameter` for reliable form data access
+
+### Controller Detection
+- Replaced unreliable string-based controller detection (`"Jenkins".equals(...)`)
+  with proper `instanceof Jenkins.MasterComputer` check in:
+  - `SeleniumAgentPropertyLink.java`
+  - `InboundAgentWatcher.java`
+
+### Timer Replacement with PeriodicWork
+- Removed problematic `java.util.Timer` implementations that didn't handle
+  dynamically added/removed agents
+- Created `SeleniumNodeHealthCheck.java` - AsyncPeriodicWork for agent node health checks
+- Created `SeleniumHubHealthCheck.java` - AsyncPeriodicWork for hub health checks
+- Both run every 5 minutes and properly iterate over all current agents
+
+### Logging Improvements
+- Changed logging level from INFO to FINE in `InboundAgentWatcher.java` to avoid
+  spamming the global Jenkins log
+- Replaced `e.printStackTrace()` with proper `LOGGER.log(Level.WARNING, ..., e)`
+  in `SeleniumLifecycleHandler.java`
+
+### Localization
+- Fixed German text "Computer ist offline." to English "Computer is offline."
+  in `SeleniumAgentAction.java`
+
+### Documentation
+- Moved Development & Local Testing section from `README.md` to new `CONTRIBUTING.md`
+- Updated `README.md` to focus on user-facing documentation (features, configuration)
+
+## UI Improvements (index.jelly)
+
+### Layout and Styling
+- Added `type="one-column"` to layout for better appearance without side panel
+- Replaced inline `padding:4px 8px` styles with `jenkins-table--medium` class
+- Replaced manual toggle switch HTML with `f:toggleSwitch` component
+- Replaced JavaScript-based slots toggle with `f:advanced` component
+- Changed hub restart logs to use `console-output` class for proper styling
+
+## Release Infrastructure
+
+### GitHub Workflows
+- Replaced custom `jenkins-release.yml` with official Jenkins CD workflow (`cd.yaml`)
+- Removed `release-drafter.yml` (not compatible with Jenkins CD)
+- Removed `.releaserc` semantic-release configuration
+
+### Security and Compliance
+- Created `SECURITY.md` with reference to Jenkins Security Policy
+- Updated `dependabot.yml` with proper labels and dependency groupings
+
+### SpotBugs Fixes
+- Removed redundant null checks for `computer` field (it's final)
+- Changed `catch(Exception)` to `catch(IOException | InterruptedException)`
+- Removed unused import `java.util.Objects`
+
+## Files Added
+- `src/main/java/selenium/plugin/SeleniumNodeHealthCheck.java`
+- `src/main/java/selenium/plugin/SeleniumHubHealthCheck.java`
+- `CONTRIBUTING.md`
+- `SECURITY.md`
+- `.github/workflows/cd.yaml`
+
+## Files Removed
+- `.github/workflows/jenkins-release.yml`
+- `.github/release-drafter.yml`
+- `.releaserc`
+- `src/main/webapp/selenium-global.js` (moved to resources for st:adjunct)
+
+## Files Modified
+- `src/main/java/selenium/plugin/SeleniumAgentAction.java`
+- `src/main/java/selenium/plugin/SeleniumGlobalProperty.java`
+- `src/main/java/selenium/plugin/SeleniumAgentPropertyLink.java`
+- `src/main/java/selenium/plugin/InboundAgentWatcher.java`
+- `src/main/java/selenium/plugin/SeleniumLifecycleHandler.java`
+- `src/main/resources/selenium/plugin/SeleniumGlobalProperty/index.jelly`
+- `README.md`
+- `.github/dependabot.yml`
+- `pom.xml`
+
+Fixes: jenkins-infra/repository-permissions-updater#4720
+
