@@ -19,10 +19,14 @@ import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.RestartListener;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 @Extension
 public class SeleniumLifecycleHandler extends RestartListener {
+
+    private static final Logger LOGGER = Logger.getLogger(SeleniumLifecycleHandler.class.getName());
 
     @Override
     public boolean isReadyToRestart() throws IOException, InterruptedException {
@@ -45,7 +49,7 @@ public class SeleniumLifecycleHandler extends RestartListener {
                     action.stopNode();
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.WARNING, "Error stopping Selenium node on " + computer.getName(), e);
             }
         }
     }

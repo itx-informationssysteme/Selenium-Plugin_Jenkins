@@ -1,6 +1,6 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
-    <l:layout title="${%SeleniumGlobalProperty.jelly.title}">
+    <l:layout title="${%SeleniumGlobalProperty.jelly.title}" type="one-column">
         <l:main-panel>
             <j:set var="instance" value="${it}"/>
             <j:set var="descriptor" value="${it.descriptor}"/>
@@ -14,7 +14,7 @@
                     <l:card title="${%SeleniumGlobalProperty.jelly.version}">
                         <f:form method="post" name="config" action="save">
                             <f:entry>
-                                <f:select field="seleniumVersion" name="seleniumVersion"/>
+                                <f:select field="seleniumVersion"/>
                             </f:entry>
                             <f:submit value="${%SeleniumGlobalProperty.jelly.save}"/>
                         </f:form>
@@ -31,15 +31,8 @@
                                     <div class="jenkins-alert jenkins-alert-danger">${it.hubStatusText}</div>
                                 </j:otherwise>
                             </j:choose>
-                            <div style="display:flex; gap:8px; align-items:center; margin-top:0px;">
-                                <j:choose>
-                                    <j:when test="${it.hubRunning}">
-                                        <f:submit value="${%SeleniumGlobalProperty.jelly.stop}" />
-                                    </j:when>
-                                    <j:otherwise>
-                                        <f:submit value="${%SeleniumGlobalProperty.jelly.start}" />
-                                    </j:otherwise>
-                                </j:choose>
+                            <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                                <f:submit value="${it.hubRunning ? '%SeleniumGlobalProperty.jelly.stop' : '%SeleniumGlobalProperty.jelly.start'}" />
                                 <j:if test="${it.hubRunning}">
                                     <a href="${it.hubUrl}/ui/" target="_blank" class="jenkins-button jenkins-button--primary">
                                         ${%SeleniumGlobalProperty.jelly.open.hub}
@@ -54,59 +47,36 @@
             <!-- Agents table with compact spacing -->
             <f:section title="${%SeleniumGlobalProperty.jelly.agents.status}">
                 <f:entry>
-                    <table class="jenkins-table sortable" style="width:100%;">
+                    <table class="jenkins-table jenkins-table--medium sortable">
                         <thead>
                             <tr>
-                                <th style="text-align:left; padding:4px 8px;">${%SeleniumGlobalProperty.jelly.agents.name}</th>
-                                <th style="text-align:left; padding:4px 8px;">${%SeleniumGlobalProperty.jelly.server.status}</th>
+                                <th>${%SeleniumGlobalProperty.jelly.agents.name}</th>
+                                <th>${%SeleniumGlobalProperty.jelly.server.status}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <j:forEach var="agent" items="${it.agents}" varStatus="loop">
                                 <tr>
-                                    <td style="text-align:left; padding:4px 8px;">
+                                    <td>
                                         <a href="${it.getAgentUrl(agent)}">${agent.displayName}</a>
                                     </td>
-                                    <td style="text-align:left; padding:4px 8px;">
+                                    <td>
                                         <f:form method="post" action="${it.hasSeleniumServer(agent) ? 'stopSeleniumNode' : 'startSeleniumNode'}" class="selenium-toggle-form">
                                             <input type="hidden" name="agentName" value="${agent.name}"/>
-
                                             <div style="display:inline-flex; align-items:center; gap:8px;">
-                                                <j:set var="toggleId" value="agent-selenium-toggle-${loop.index}"/>
-                                                <span class="jenkins-toggle-switch">
-                                                    <j:choose>
-                                                        <j:when test="${it.hasSeleniumServer(agent)}">
-                                                            <input
-                                                                class="jenkins-toggle-switch__input selenium-toggle-input"
-                                                                type="checkbox"
-                                                                id="${toggleId}"
-                                                                name="enabled"
-                                                                checked="checked"/>
-                                                        </j:when>
-                                                        <j:otherwise>
-                                                            <input
-                                                                class="jenkins-toggle-switch__input selenium-toggle-input"
-                                                                type="checkbox"
-                                                                id="${toggleId}"
-                                                                name="enabled"/>
-                                                        </j:otherwise>
-                                                    </j:choose>
-                                                    <label class="jenkins-toggle-switch__label" for="${toggleId}">
-                                                        <span class="jenkins-toggle-switch__inner">&#160;</span>
-                                                        <span class="jenkins-toggle-switch__switch">&#160;</span>
-                                                    </label>
-                                                </span>
-
-                                                <span>
-                                                    <j:choose>
-                                                        <j:when test="${it.hasSeleniumServer(agent)}">
-                                                            <span class="jenkins-!-color-green">${%SeleniumGlobalProperty.jelly.active}</span>
-                                                        </j:when>
-                                                        <j:otherwise>
-                                                            <span class="jenkins-!-color-red">${%SeleniumGlobalProperty.jelly.inactive}</span>
-                                                        </j:otherwise>
-                                                    </j:choose>
-                                                </span>
+                                                <f:toggleSwitch
+                                                    id="agent-selenium-toggle-${loop.index}"
+                                                    name="enabled"
+                                                    class="selenium-toggle-input"
+                                                    checked="${it.hasSeleniumServer(agent)}"/>
+                                                <j:choose>
+                                                    <j:when test="${it.hasSeleniumServer(agent)}">
+                                                        <span class="jenkins-!-color-green">${%SeleniumGlobalProperty.jelly.active}</span>
+                                                    </j:when>
+                                                    <j:otherwise>
+                                                        <span class="jenkins-!-color-red">${%SeleniumGlobalProperty.jelly.inactive}</span>
+                                                    </j:otherwise>
+                                                </j:choose>
                                             </div>
                                         </f:form>
                                     </td>
@@ -125,11 +95,11 @@
 
                     <!-- Card for overall grid status -->
                     <l:card title="${%SeleniumGlobalProperty.jelly.grid.status}">
-                        <table class="jenkins-table" style="width:100%; margin-bottom:0;">
+                        <table class="jenkins-table jenkins-table--medium">
                             <tbody>
                                 <tr>
-                                    <th style="width:150px; padding:4px 8px;">${%SeleniumGlobalProperty.jelly.full.status}</th>
-                                    <td style="padding:4px 8px;">
+                                    <th style="width:150px;">${%SeleniumGlobalProperty.jelly.full.status}</th>
+                                    <td>
                                         <j:choose>
                                             <j:when test="${gridValue.ready}">
                                                 <span class="jenkins-!-color-green jenkins-!-font-weight-bold">✔ ${%SeleniumGlobalProperty.jelly.ready}</span>
@@ -141,12 +111,12 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.status.message}</th>
-                                    <td style="padding:4px 8px;">${gridValue.message}</td>
+                                    <th>${%SeleniumGlobalProperty.jelly.status.message}</th>
+                                    <td>${gridValue.message}</td>
                                 </tr>
                                 <tr>
-                                    <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.amount.nodes}</th>
-                                    <td style="padding:4px 8px;">${gridValue.nodes.size()}</td>
+                                    <th>${%SeleniumGlobalProperty.jelly.amount.nodes}</th>
+                                    <td>${gridValue.nodes.size()}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -157,19 +127,19 @@
                         <l:card title="${%SeleniumGlobalProperty.jelly.registered.nodes}">
                         <j:forEach var="node" items="${gridValue.nodes}" varStatus="loop">
                             <l:card title="Node: ${node.id}">
-                                <table class="jenkins-table" style="width:100%;">
+                                <table class="jenkins-table jenkins-table--medium">
                                     <tbody>
                                         <tr>
-                                            <th style="width:150px; padding:4px 8px;">Node ID</th>
-                                            <td style="word-break:break-all; padding:4px 8px;">${node.id}</td>
+                                            <th style="width:150px;">Node ID</th>
+                                            <td style="word-break:break-all;">${node.id}</td>
                                         </tr>
                                         <tr>
-                                            <th style="padding:4px 8px;">URI</th>
-                                            <td style="padding:4px 8px;"><a href="${node.uri}" target="_blank">${node.uri}</a></td>
+                                            <th>URI</th>
+                                            <td><a href="${node.uri}" target="_blank">${node.uri}</a></td>
                                         </tr>
                                         <tr>
-                                            <th style="padding:4px 8px;">Status</th>
-                                            <td style="padding:4px 8px;">
+                                            <th>Status</th>
+                                            <td>
                                                 <j:choose>
                                                     <j:when test="${node.availability == 'UP'}">
                                                         <span class="jenkins-!-color-green jenkins-!-font-weight-bold">✔ ${node.availability}</span>
@@ -181,57 +151,49 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.node.version}</th>
-                                            <td style="padding:4px 8px;">${node.version}</td>
+                                            <th>${%SeleniumGlobalProperty.jelly.node.version}</th>
+                                            <td>${node.version}</td>
                                         </tr>
                                         <tr>
-                                            <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.node.os}</th>
-                                            <td style="padding:4px 8px;">${node.osInfo.name} ${node.osInfo.version} (${node.osInfo.arch})</td>
+                                            <th>${%SeleniumGlobalProperty.jelly.node.os}</th>
+                                            <td>${node.osInfo.name} ${node.osInfo.version} (${node.osInfo.arch})</td>
                                         </tr>
                                         <tr>
-                                            <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.node.max.sessions}</th>
-                                            <td style="padding:4px 8px;">${node.maxSessions}</td>
+                                            <th>${%SeleniumGlobalProperty.jelly.node.max.sessions}</th>
+                                            <td>${node.maxSessions}</td>
                                         </tr>
                                     </tbody>
                                 </table>
 
-                                <div style="margin-top:8px;" class="jenkins-!-text-color">
-                                    <a href="#"
-                                       class="selenium-slots-toggle"
-                                       data-slots-id="slots-${loop.index}"
-                                       style="text-decoration:none; font-weight:bold;">
-                                        <span id="slots-toggle-${loop.index}">▼</span> ${%SeleniumGlobalProperty.jelly.slots.show} (${node.slots.size()})
-                                    </a>
-                                    <div id="slots-${loop.index}" style="display:none; margin-top:10px;">
-                                        <table class="jenkins-table" style="width:100%;">
-                                            <thead>
+                                <f:advanced title="${%SeleniumGlobalProperty.jelly.slots.show} (${node.slots.size()})">
+                                    <table class="jenkins-table jenkins-table--medium">
+                                        <thead>
+                                            <tr>
+                                                <th>${%SeleniumGlobalProperty.jelly.slots.browser}</th>
+                                                <th>${%SeleniumGlobalProperty.jelly.slots.platform}</th>
+                                                <th>${%SeleniumGlobalProperty.jelly.slots.status}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <j:forEach var="slot" items="${node.slots}">
                                                 <tr>
-                                                    <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.slots.browser}</th>
-                                                    <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.slots.platform}</th>
-                                                    <th style="padding:4px 8px;">${%SeleniumGlobalProperty.jelly.slots.status}</th>
+                                                    <td>${slot.stereotype.browserName}</td>
+                                                    <td>${slot.stereotype.platformName}</td>
+                                                    <td>
+                                                        <j:choose>
+                                                            <j:when test="${slot.session.toString() == 'null'}">
+                                                                <span class="jenkins-!-color-green">${%SeleniumGlobalProperty.jelly.slots.free}</span>
+                                                            </j:when>
+                                                            <j:otherwise>
+                                                                <span class="jenkins-!-color-red">${%SeleniumGlobalProperty.jelly.slots.occupied}</span>
+                                                            </j:otherwise>
+                                                        </j:choose>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                <j:forEach var="slot" items="${node.slots}">
-                                                    <tr>
-                                                        <td style="padding:4px 8px;">${slot.stereotype.browserName}</td>
-                                                        <td style="padding:4px 8px;">${slot.stereotype.platformName}</td>
-                                                        <td style="padding:4px 8px;">
-                                                            <j:choose>
-                                                                <j:when test="${slot.session.toString() == 'null'}">
-                                                                    <span class="jenkins-!-color-green">${%SeleniumGlobalProperty.jelly.slots.free}</span>
-                                                                </j:when>
-                                                                <j:otherwise>
-                                                                    <span class="jenkins-!-color-red">${%SeleniumGlobalProperty.jelly.slots.occupied}</span>
-                                                                </j:otherwise>
-                                                            </j:choose>
-                                                        </td>
-                                                    </tr>
-                                                </j:forEach>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                            </j:forEach>
+                                        </tbody>
+                                    </table>
+                                </f:advanced>
                             </l:card>
                         </j:forEach>
                         </l:card>
@@ -248,23 +210,23 @@
             <!-- Hub-Restart-Logs -->
             <f:section title="${%SeleniumGlobalProperty.jelly.hub.restart.logs}">
                 <f:entry>
-                    <div style="width:100%; max-height:320px; overflow-y:auto; border:1px solid #ddd; border-radius:4px; background-color:#1e1e1e; color:#f5f5f5; font-family:monospace; padding:8px 12px;">
+                    <pre class="console-output" style="display:flex; gap:4px; flex-direction:column; max-height:320px; overflow-y:auto;">
                         <j:choose>
                             <j:when test="${!it.hubRestartLogs.isEmpty()}">
                                 <j:forEach var="log" items="${it.hubRestartLogs}">
-                                    <div style="white-space:pre-wrap; border-bottom:1px solid #333; padding:4px 0;">${log}</div>
+                                    <div>${log}</div>
                                 </j:forEach>
                             </j:when>
                             <j:otherwise>
-                                <div style="color:#aaa; padding:4px 0;">${%SeleniumGlobalProperty.jelly.no.hub.restart.logs}</div>
+                                <div>${%SeleniumGlobalProperty.jelly.no.hub.restart.logs}</div>
                             </j:otherwise>
                         </j:choose>
-                    </div>
+                    </pre>
                 </f:entry>
             </f:section>
 
         </l:main-panel>
 
-        <script type="text/javascript" src="${rootURL}/plugin/selenium-hub/selenium-global.js"></script>
+        <st:adjunct includes="selenium.plugin.SeleniumGlobalProperty.selenium-global"/>
     </l:layout>
 </j:jelly>
